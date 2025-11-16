@@ -1,7 +1,8 @@
 import './style.css';
 import { createDesktop } from './os/desktop.js';
 import { windowManager } from './os/windowManager.js';
-import { initGameLoop } from './state/gameState.js';
+import { startAutoSave } from './state/gameState.js';
+import { startCombatLoop } from './state/combatEngine.js';
 
 import { questExplorerApp } from './os/apps/questExplorer.js';
 import { soulwareStoreApp } from './os/apps/soulwareStore.js';
@@ -23,7 +24,8 @@ windowManager.registerApp(lootDownloadsApp);
 windowManager.registerApp(recycleShrineApp);
 windowManager.registerApp(systemSigilsApp);
 
-// Start basic idle loop logging to console
-initGameLoop();
+// Start game systems
+startCombatLoop();
+startAutoSave();
 
-console.log('ReincarnOS booted.');
+console.log('ReincarnOS booted - Combat and auto-save active');
