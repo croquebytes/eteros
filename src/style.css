@@ -2100,3 +2100,230 @@ body {
   margin-bottom: 0.25rem;
 }
 
+/* ===== Battle Tracker Widget (Sticky Note) ===== */
+
+.battle-tracker {
+  position: absolute;
+  width: 280px;
+  background: rgba(18, 26, 47, 0.95);
+  border: 2px solid rgba(59, 130, 246, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  z-index: 50;
+  cursor: move;
+  user-select: none;
+  pointer-events: auto;
+  font-size: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.battle-tracker-header {
+  padding: 8px 12px;
+  background: linear-gradient(to right, #1a2438, #243854);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px 6px 0 0;
+  font-weight: 700;
+  font-size: 13px;
+  color: #60a5fa;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.battle-tracker-header:hover {
+  background: linear-gradient(to right, #243854, #2a3f61);
+}
+
+.battle-tracker-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tracker-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.tracker-label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tracker-value {
+  font-weight: 700;
+  color: #60a5fa;
+  font-size: 14px;
+}
+
+.tracker-wave .tracker-value {
+  color: #a855f7;
+}
+
+.tracker-gold .tracker-value {
+  color: #f59e0b;
+}
+
+.tracker-xp .tracker-value {
+  color: #10b981;
+}
+
+.tracker-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.3), transparent);
+  margin: 4px 0;
+}
+
+.tracker-enemies {
+  padding: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.tracker-enemy-header {
+  font-weight: 700;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.tracker-enemy-header.boss {
+  color: #a855f7;
+  font-size: 13px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.tracker-heroes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tracker-hero {
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tracker-hero-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 11px;
+  margin-bottom: 4px;
+  color: #f5f5f5;
+}
+
+.tracker-hero-level {
+  font-size: 10px;
+  color: #93c5fd;
+  opacity: 0.8;
+}
+
+.tracker-hero-hp-bar {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+
+.tracker-hero-hp-fill {
+  height: 100%;
+  transition: width 0.3s ease, background 0.3s ease;
+  border-radius: 5px;
+}
+
+.tracker-hero-hp-text {
+  font-size: 9px;
+  text-align: right;
+  opacity: 0.7;
+}
+
+.tracker-status {
+  padding: 8px;
+  text-align: center;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.status-running {
+  color: #10b981;
+}
+
+.status-idle {
+  color: #94a3b8;
+}
+
+.tracker-notification {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.95);
+  border: 2px solid #10b981;
+  border-radius: 6px;
+  color: white;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.3s ease;
+  z-index: 100;
+}
+
+.tracker-notification-level-up {
+  background: rgba(168, 85, 247, 0.95);
+  border-color: #a855f7;
+}
+
+.tracker-notification-item {
+  background: rgba(245, 158, 11, 0.95);
+  border-color: #f59e0b;
+}
+
+.tracker-notification.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    top: -60px;
+  }
+  to {
+    opacity: 1;
+    top: -40px;
+  }
+}
+
+/* Drag cursor for titlebar */
+.os-window-titlebar {
+  cursor: grab;
+}
+
+.os-window-titlebar:active {
+  cursor: grabbing;
+}
+

@@ -1,4 +1,5 @@
 import { windowManager } from './windowManager.js';
+import { createBattleTracker } from './battleTrackerWidget.js';
 
 const APPS = [
   { id: 'questExplorer', label: 'Quest Explorer' },
@@ -89,6 +90,10 @@ export function createDesktop() {
 
   updateClock();
   setInterval(updateClock, 60_000);
+
+  // Add battle tracker widget
+  const battleTracker = createBattleTracker();
+  desktopEl.appendChild(battleTracker);
 
   return { desktopEl, windowLayerEl };
 }
