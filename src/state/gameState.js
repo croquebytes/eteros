@@ -17,6 +17,15 @@ export const gameState = {
   fragments: 0,                   // Secondary currency for prestige
   lifetimeGold: 0,                // Total gold earned (for prestige calculation)
 
+  // Resources (Expansion 1.1)
+  resources: {
+    gold: 0,
+    codeFragments: 0,
+    memoryBlocks: 0,
+    cpuCycles: 100,                // Start with some CPU
+    entropyDust: 0
+  },
+
   // Heroes
   heroes: [
     createHero('warrior', 'Sword Saint', 1),
@@ -49,6 +58,19 @@ export const gameState = {
   // Quests
   quests: [],
   completedQuests: [],
+  mailbox: [],                     // Mail/quest messages
+
+  // Tasks (Expansion 1.1)
+  activeTasks: [],
+  completedTasks: [],
+
+  // Research (Expansion 1.1)
+  research: {
+    completed: [],
+    active: null,
+    cpuBoost: 0,
+    unlocked: []
+  },
 
   // Prestige (System Sigils)
   sigilPoints: 0,

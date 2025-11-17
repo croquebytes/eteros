@@ -2,6 +2,9 @@ import { windowManager } from './windowManager.js';
 
 const APPS = [
   { id: 'questExplorer', label: 'Quest Explorer' },
+  { id: 'mailClient', label: 'Mail Client' },
+  { id: 'taskScheduler', label: 'Task Scheduler' },
+  { id: 'researchLab', label: 'Research Lab' },
   { id: 'soulwareStore', label: 'Soulware Store' },
   { id: 'lootDownloads', label: 'Loot Downloads' },
   { id: 'recycleShrine', label: 'Recycle Shrine' },
