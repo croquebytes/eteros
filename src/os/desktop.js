@@ -29,6 +29,7 @@ export function createDesktop() {
   APPS.forEach((app) => {
     const icon = document.createElement('div');
     icon.className = 'desktop-icon';
+    icon.dataset.appId = app.id;
 
     const glyph = document.createElement('div');
     glyph.className = 'desktop-icon-glyph';
@@ -59,6 +60,7 @@ export function createDesktop() {
   APPS.forEach((app) => {
     const btn = document.createElement('button');
     btn.className = 'taskbar-button';
+    btn.dataset.appId = app.id;
     btn.textContent = app.label;
     btn.addEventListener('click', () => {
       windowManager.openWindow(app.id);
