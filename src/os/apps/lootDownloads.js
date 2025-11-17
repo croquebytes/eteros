@@ -3,6 +3,7 @@
 
 import { gameState } from '../../state/enhancedGameState.js';
 import { equipItem, unequipItem, updateHeroStats } from '../../state/heroSystem.js';
+import { showToast, showSelectionToast, showConfirmToast } from '../toastManager.js';
 
 export const lootDownloadsApp = {
   id: 'lootDownloads',
@@ -144,33 +145,31 @@ function showEquipDialog(itemId, rootEl) {
   const eligibleHeroes = gameState.heroes.filter(h => h.currentHp > 0);
 
   if (eligibleHeroes.length === 0) {
-    alert('No living heroes available to equip this item!');
+    showToast('No living heroes available to equip this item!', 'warning');
     return;
   }
 
-  // Create a simple selection dialog
-  const heroNames = eligibleHeroes.map((h, i) => `${i + 1}. ${h.name} (${h.role || 'hero'})`).join('\n');
-  const selection = prompt(`Equip ${item.name} to which hero?\n\n${heroNames}\n\nEnter number (1-${eligibleHeroes.length}):`);
+  // Create a selection toast with hero options
+  const heroOptions = eligibleHeroes.map(h => ({
+    label: `${h.name} (Lv${h.level} ${h.role || 'Hero'})`,
+    value: h
+  }));
 
-  if (selection) {
-    const index = parseInt(selection) - 1;
-    if (index >= 0 && index < eligibleHeroes.length) {
-      const hero = eligibleHeroes[index];
-      const result = equipItem(hero, item);
-      if (result.success) {
-        // Remove equipped item from inventory and return old item if present
-        gameState.inventory = gameState.inventory.filter(i => i.id !== itemId);
-        if (result.oldItem) {
-          gameState.inventory.push(result.oldItem);
-        }
-        updateHeroStats(hero);
-        alert(`${item.name} equipped to ${hero.name}!`);
-        render(rootEl);
-      } else {
-        alert(result.error || 'Failed to equip item.');
+  showSelectionToast(`Equip ${item.name} to:`, heroOptions, (selectedHero) => {
+    const result = equipItem(selectedHero, item);
+    if (result.success) {
+      // Remove equipped item from inventory and return old item if present
+      gameState.inventory = gameState.inventory.filter(i => i.id !== itemId);
+      if (result.oldItem) {
+        gameState.inventory.push(result.oldItem);
       }
+      updateHeroStats(selectedHero);
+      showToast(`${item.name} equipped to ${selectedHero.name}!`, 'success');
+      render(rootEl);
+    } else {
+      showToast(result.error || 'Failed to equip item.', 'error');
     }
-  }
+  });
 }
 
 function recycleItemPrompt(itemId, rootEl) {
@@ -182,15 +181,19 @@ function recycleItemPrompt(itemId, rootEl) {
   const goldValue = Math.max(1, Math.floor((item.level || 1) * 2 * rarityMultiplier));
   const fragmentValue = Math.max(1, Math.floor(rarityMultiplier));
 
-  const confirmed = confirm(`Recycle ${item.name}?\n\nYou will receive:\n+${goldValue} Gold\n+${fragmentValue} Fragments`);
-
-  if (confirmed) {
-    gameState.gold += goldValue;
-    gameState.fragments += fragmentValue;
-    gameState.inventory = gameState.inventory.filter(i => i.id !== itemId);
-    console.log(`Recycled ${item.name} for ${goldValue} gold and ${fragmentValue} fragments`);
-    render(rootEl);
-  }
+  showConfirmToast(
+    `Recycle ${item.name}? You will receive: +${goldValue} Gold`,
+    () => {
+      gameState.gold += goldValue;
+      if (gameState.currencies && gameState.currencies.memoryFragments !== undefined) {
+        gameState.currencies.memoryFragments += fragmentValue;
+      }
+      gameState.inventory = gameState.inventory.filter(i => i.id !== itemId);
+      showToast(`Recycled ${item.name} for ${goldValue} gold`, 'success');
+      console.log(`Recycled ${item.name} for ${goldValue} gold and ${fragmentValue} fragments`);
+      render(rootEl);
+    }
+  );
 }
 
 window.unequipFromHero = (heroId, slot, rootEl) => {
@@ -200,7 +203,7 @@ window.unequipFromHero = (heroId, slot, rootEl) => {
   if (result.success) {
     gameState.inventory.push(result.item);
     updateHeroStats(hero);
-    alert(`Unequipped ${result.item.name} from ${hero.name}`);
+    showToast(`Unequipped ${result.item.name} from ${hero.name}`, 'success');
     const appWindow = document.querySelector('[data-app-id="lootDownloads"] .os-window-body');
     if (appWindow) {
       render(appWindow);

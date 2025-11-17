@@ -3,6 +3,7 @@ import { createDesktop } from './os/desktop.js';
 import { windowManager } from './os/windowManager.js';
 import { startAutoSave } from './state/gameState.js';
 import { startCombatLoop } from './state/combatEngine.js';
+import { initToastManager } from './os/toastManager.js';
 
 // Import apps
 import { questExplorerApp } from './os/apps/questExplorer.js';
@@ -21,7 +22,10 @@ import { initSynergySystem } from './state/heroSynergies.js';
 
 const root = document.getElementById('app');
 
-const { desktopEl, windowLayerEl } = createDesktop();
+// Initialize toast notification system
+initToastManager();
+
+const { desktopEl, windowLayerEl} = createDesktop();
 root.appendChild(desktopEl);
 
 windowManager.init(windowLayerEl);

@@ -7,6 +7,8 @@ import { updateHeroStats, addXpToHero } from './heroSystem.js';
 let dungeonInterval = null;
 const listeners = [];
 let battleNotify = null;
+let currentEnemies = [];
+let combatLog = [];
 
 // Set notification callback (from battle tracker)
 export function setBattleNotification(notifyFn) {
@@ -19,9 +21,15 @@ export function startDungeon() {
   gameState.dungeonState.timeInWave = 0;
 
   // Top off heroes before a new push
-  gameState.heroes.forEach(hero => updateHeroStats(hero));
+  gameState.heroes.forEach(hero => {
+    updateHeroStats(hero);
+    hero.currentHp = hero.currentStats.hp;
+  });
 
-  dungeonInterval = setInterval(tickWave, 500);
+  // Create enemies for this wave
+  spawnEnemies();
+
+  dungeonInterval = setInterval(tickCombat, 500);
   notify();
 }
 
@@ -42,16 +50,147 @@ export function toggleDungeon() {
   }
 }
 
-function tickWave() {
-  if (!gameState.dungeonState.running) return;
+function spawnEnemies() {
+  const isBossWave = gameState.wave % 10 === 0;
+  const enemyCount = isBossWave ? 1 : Math.min(1 + Math.floor(gameState.wave / 5), 5);
 
-  gameState.dungeonState.timeInWave += 500;
-
-  if (gameState.dungeonState.timeInWave >= gameState.dungeonState.waveDuration) {
-    completeWave();
+  currentEnemies = [];
+  for (let i = 0; i < enemyCount; i++) {
+    currentEnemies.push(createEnemy(gameState.wave, isBossWave));
   }
 
+  combatLog = [];
+}
+
+function createEnemy(wave, isBoss) {
+  const baseMult = 1 + (wave * 0.15);
+  const bossMult = isBoss ? 3 : 1;
+
+  const hp = Math.floor(50 * baseMult * bossMult);
+  const atk = Math.floor(8 * baseMult * bossMult);
+
+  const enemyTypes = isBoss
+    ? ['Malware Boss', 'Firewall Sentinel', 'Virus Core', 'System Daemon']
+    : ['Bugbot', 'Spam Script', 'Ad Popup', 'Cookie Monster', 'Memory Leak'];
+
+  const name = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+
+  return {
+    id: `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: isBoss ? `💀 ${name}` : name,
+    maxHp: hp,
+    currentHp: hp,
+    atk: atk,
+    def: Math.floor(2 * baseMult * bossMult),
+    isBoss: isBoss,
+    lastAttackTime: Date.now()
+  };
+}
+
+function tickCombat() {
+  if (!gameState.dungeonState.running) return;
+
+  const now = Date.now();
+  const activeHeroes = gameState.heroes.filter(h => h.currentHp > 0 && !h.onDispatch);
+  const aliveEnemies = currentEnemies.filter(e => e.currentHp > 0);
+
+  // Check win condition
+  if (aliveEnemies.length === 0) {
+    completeWave();
+    return;
+  }
+
+  // Check lose condition
+  if (activeHeroes.length === 0) {
+    loseWave();
+    return;
+  }
+
+  // Heroes attack
+  for (const hero of activeHeroes) {
+    if (now - hero.lastAttackTime >= 2000) { // Attack every 2 seconds
+      const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+      if (target) {
+        heroAttack(hero, target);
+        hero.lastAttackTime = now;
+      }
+    }
+  }
+
+  // Enemies attack
+  for (const enemy of aliveEnemies) {
+    if (now - enemy.lastAttackTime >= 2500) { // Enemies attack every 2.5 seconds
+      const target = activeHeroes[Math.floor(Math.random() * activeHeroes.length)];
+      if (target) {
+        enemyAttack(enemy, target);
+        enemy.lastAttackTime = now;
+      }
+    }
+  }
+
+  gameState.dungeonState.timeInWave += 500;
   notify();
+}
+
+function heroAttack(hero, enemy) {
+  const damage = Math.max(1, hero.currentStats.atk - enemy.def);
+  enemy.currentHp = Math.max(0, enemy.currentHp - damage);
+
+  combatLog.push({
+    type: 'hero-attack',
+    attacker: hero.name,
+    target: enemy.name,
+    damage: damage
+  });
+
+  if (enemy.currentHp === 0) {
+    combatLog.push({
+      type: 'enemy-defeated',
+      enemy: enemy.name
+    });
+  }
+}
+
+function enemyAttack(enemy, hero) {
+  const damage = Math.max(1, enemy.atk - (hero.currentStats.def || 0));
+  hero.currentHp = Math.max(0, hero.currentHp - damage);
+
+  combatLog.push({
+    type: 'enemy-attack',
+    attacker: enemy.name,
+    target: hero.name,
+    damage: damage
+  });
+
+  if (hero.currentHp === 0) {
+    combatLog.push({
+      type: 'hero-defeated',
+      hero: hero.name
+    });
+  }
+}
+
+function loseWave() {
+  gameState.dungeonState.running = false;
+
+  if (battleNotify) {
+    battleNotify('Party defeated! Healing heroes...', 'warning');
+  }
+
+  // Heal all heroes and restart wave
+  setTimeout(() => {
+    gameState.heroes.forEach(hero => {
+      hero.currentHp = hero.currentStats.hp;
+    });
+
+    if (battleNotify) {
+      battleNotify('Heroes healed. Ready to continue!', 'success');
+    }
+
+    spawnEnemies();
+    gameState.dungeonState.running = true;
+    notify();
+  }, 3000);
 }
 
 function completeWave() {
@@ -90,8 +229,11 @@ function completeWave() {
   // Item drops
   handleItemDrop(isBossWave);
 
-  // Advance wave
+  // Advance wave and spawn new enemies
   gameState.wave += 1;
+  spawnEnemies();
+
+  notify();
 }
 
 function handleItemDrop(isBossWave) {
@@ -180,20 +322,34 @@ export function onDungeonUpdate(callback) {
 }
 
 export function getDungeonStats() {
-  const progress = Math.min(100, Math.floor((gameState.dungeonState.timeInWave / gameState.dungeonState.waveDuration) * 100));
+  const aliveEnemies = currentEnemies.filter(e => e.currentHp > 0);
   const isBossWave = gameState.wave % 10 === 0;
-  const enemyCount = Math.min(1 + Math.floor(gameState.wave / 5), 5);
 
   return {
     wave: gameState.wave,
     gold: gameState.gold,
     xp: gameState.xp,
     running: gameState.dungeonState.running,
-    progress,
+    progress: 100, // No longer time-based, combat continues until enemies dead
     isBossWave,
-    enemyCount: isBossWave ? 1 : enemyCount,
-    enemyType: isBossWave ? 'Boss' : 'Normal'
+    enemyCount: currentEnemies.length,
+    enemyType: isBossWave ? 'Boss' : 'Normal',
+    enemies: currentEnemies.map(e => ({
+      id: e.id,
+      name: e.name,
+      currentHp: e.currentHp,
+      maxHp: e.maxHp,
+      atk: e.atk,
+      def: e.def,
+      isBoss: e.isBoss,
+      hpPercent: Math.floor((e.currentHp / e.maxHp) * 100)
+    })),
+    aliveEnemies: aliveEnemies.length
   };
+}
+
+export function getCombatLog(limit = 10) {
+  return combatLog.slice(-limit);
 }
 
 function notify() {
