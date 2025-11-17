@@ -81,6 +81,9 @@ export const windowManager = {
         this.setActiveWindow(appId);
       });
 
+      // Make window draggable by titlebar
+      this.makeDraggable(winEl, titleBar);
+
       this.windowLayerEl.appendChild(winEl);
       entry.el = winEl;
     } else {
@@ -90,6 +93,71 @@ export const windowManager = {
 
     // Activate this window
     this.setActiveWindow(appId);
+  },
+
+  /**
+   * Make a window draggable by its titlebar
+   */
+  makeDraggable(winEl, titleBar) {
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    titleBar.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Get initial offset from existing position
+    const rect = winEl.getBoundingClientRect();
+    xOffset = rect.left;
+    yOffset = rect.top;
+
+    function dragStart(e) {
+      // Don't drag if clicking on controls
+      if (e.target.closest('.os-window-controls')) {
+        return;
+      }
+
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
+      isDragging = true;
+
+      titleBar.style.cursor = 'grabbing';
+      winEl.style.userSelect = 'none';
+    }
+
+    function drag(e) {
+      if (!isDragging) return;
+
+      e.preventDefault();
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+
+      // Constrain to viewport
+      const maxX = window.innerWidth - 200; // Leave at least 200px visible
+      const maxY = window.innerHeight - 100; // Leave at least 100px visible
+
+      currentX = Math.max(0, Math.min(currentX, maxX));
+      currentY = Math.max(0, Math.min(currentY, maxY));
+
+      xOffset = currentX;
+      yOffset = currentY;
+
+      winEl.style.left = currentX + 'px';
+      winEl.style.top = currentY + 'px';
+    }
+
+    function dragEnd() {
+      if (isDragging) {
+        isDragging = false;
+        titleBar.style.cursor = 'default';
+        winEl.style.userSelect = '';
+      }
+    }
   },
 
   closeWindow(appId) {
