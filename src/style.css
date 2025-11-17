@@ -2759,3 +2759,76 @@ body {
   font-family: sans-serif;
 }
 
+/* ===== Drag and Drop System ===== */
+
+.drag-ghost {
+  transition: opacity 0.2s ease;
+}
+
+.drag-ghost-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(18, 26, 47, 0.95);
+  border: 2px solid rgba(59, 130, 246, 0.6);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  font-size: 12px;
+  font-weight: 700;
+  color: #f5f5f5;
+  white-space: nowrap;
+}
+
+.ghost-icon {
+  font-size: 16px;
+}
+
+.ghost-name {
+  color: #60a5fa;
+}
+
+.inventory-item.is-dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+  filter: grayscale(0.5);
+}
+
+.equipment-slot.drop-zone-active {
+  background: rgba(59, 130, 246, 0.05);
+  border: 2px dashed rgba(59, 130, 246, 0.4);
+  animation: dropZonePulse 1.5s ease-in-out infinite;
+}
+
+.equipment-slot.drop-zone-hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.8);
+  border-style: solid;
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+@keyframes dropZonePulse {
+  0%, 100% {
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    border-color: rgba(59, 130, 246, 0.7);
+  }
+}
+
+.item-drag-hint {
+  font-size: 9px;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 4px;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.inventory-item:hover .item-drag-hint {
+  color: #60a5fa;
+  opacity: 1;
+}
+

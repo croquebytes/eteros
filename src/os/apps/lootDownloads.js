@@ -4,6 +4,7 @@
 import { gameState } from '../../state/enhancedGameState.js';
 import { equipItem, unequipItem, updateHeroStats } from '../../state/heroSystem.js';
 import { showToast, showSelectionToast, showConfirmToast } from '../toastManager.js';
+import { makeDraggable, registerDropZone } from '../dragManager.js';
 
 export const lootDownloadsApp = {
   id: 'lootDownloads',
@@ -62,7 +63,7 @@ function renderInventory(rootEl) {
     const statsText = formatStats(item);
 
     return `
-      <div class="inventory-item" style="border-color: ${rarityColor};">
+      <div class="inventory-item" data-item-id="${item.id}" style="border-color: ${rarityColor};">
         <div class="item-header">
           <span class="item-slot-icon">${getSlotIcon(item.type || item.slot)}</span>
           <span class="item-rarity" style="color: ${rarityColor};">${rarityLabel.text}</span>
@@ -70,6 +71,7 @@ function renderInventory(rootEl) {
         <div class="item-name">${item.name}</div>
         <div class="item-level">${item.templateId ? 'Soulware' : `Level ${item.level || 1}`}</div>
         <div class="item-stats">${statsText}</div>
+        <div class="item-drag-hint">✋ Drag to hero or click to equip</div>
         <div class="item-actions">
           <button class="btn-item-action" onclick="window.showEquipDialog('${item.id}')">Equip</button>
           <button class="btn-item-action btn-recycle" onclick="window.recycleItem('${item.id}')">Recycle</button>
@@ -77,6 +79,24 @@ function renderInventory(rootEl) {
       </div>
     `;
   }).join('');
+
+  // Make items draggable
+  setTimeout(() => {
+    gameState.inventory.forEach(item => {
+      const itemEl = grid.querySelector(`[data-item-id="${item.id}"]`);
+      if (itemEl) {
+        const rarityLabel = getRarityLabel(item.rarity);
+        makeDraggable(itemEl, { type: 'item', item }, () => {
+          return `
+            <div class="drag-ghost-item" style="border-color: ${rarityLabel.color};">
+              <span class="ghost-icon">${getSlotIcon(item.type)}</span>
+              <span class="ghost-name">${item.name}</span>
+            </div>
+          `;
+        });
+      }
+    });
+  }, 10);
 
   // Expose functions to window for onclick handlers
   window.showEquipDialog = (itemId) => showEquipDialog(itemId, rootEl);
@@ -91,7 +111,7 @@ function renderHeroEquipment(rootEl) {
     const classGlyph = hero.role?.[0]?.toUpperCase() || '⚔️';
 
     return `
-      <div class="hero-equipment-card">
+      <div class="hero-equipment-card" data-hero-id="${hero.id}">
         <div class="hero-card-header">
           <span class="hero-glyph">${classGlyph}</span>
           <span class="hero-name">${hero.name}</span>
@@ -105,6 +125,31 @@ function renderHeroEquipment(rootEl) {
       </div>
     `;
   }).join('');
+
+  // Register drop zones for each hero's equipment slots
+  setTimeout(() => {
+    gameState.heroes.forEach(hero => {
+      const heroCard = list.querySelector(`[data-hero-id="${hero.id}"]`);
+      if (!heroCard) return;
+
+      ['weapon', 'armor', 'accessory'].forEach(slot => {
+        const slotEl = heroCard.querySelector(`[data-slot="${slot}"]`);
+        if (slotEl) {
+          registerDropZone(
+            slotEl,
+            (data) => {
+              // Validate: must be an item of the correct type
+              return data.type === 'item' && data.item.type === slot;
+            },
+            (data) => {
+              // Handle drop
+              handleItemDrop(hero, data.item, rootEl);
+            }
+          );
+        }
+      });
+    });
+  }, 10);
 }
 
 function renderEquipmentSlot(hero, slot) {
@@ -113,10 +158,10 @@ function renderEquipmentSlot(hero, slot) {
 
   if (!item) {
     return `
-      <div class="equipment-slot empty">
+      <div class="equipment-slot empty" data-slot="${slot}">
         <span class="slot-icon">${slotIcon}</span>
         <span class="slot-name">${slot}</span>
-        <span class="slot-empty">Empty</span>
+        <span class="slot-empty">Drop ${slot} here</span>
       </div>
     `;
   }
@@ -125,7 +170,7 @@ function renderEquipmentSlot(hero, slot) {
   const statsText = formatStats(item, ', ');
 
   return `
-    <div class="equipment-slot filled" style="border-color: ${rarityInfo.color};">
+    <div class="equipment-slot filled" data-slot="${slot}" style="border-color: ${rarityInfo.color};">
       <div class="slot-header">
         <span class="slot-icon">${slotIcon}</span>
         <span class="slot-name" style="color: ${rarityInfo.color};">${rarityInfo.text}</span>
@@ -135,6 +180,22 @@ function renderEquipmentSlot(hero, slot) {
       <button class="btn-unequip" onclick="window.unequipFromHero('${hero.id}', '${slot}')">Unequip</button>
     </div>
   `;
+}
+
+function handleItemDrop(hero, item, rootEl) {
+  const result = equipItem(hero, item);
+  if (result.success) {
+    // Remove equipped item from inventory and return old item if present
+    gameState.inventory = gameState.inventory.filter(i => i.id !== item.id);
+    if (result.oldItem) {
+      gameState.inventory.push(result.oldItem);
+    }
+    updateHeroStats(hero);
+    showToast(`${item.name} equipped to ${hero.name}!`, 'success');
+    render(rootEl);
+  } else {
+    showToast(result.error || 'Failed to equip item.', 'error');
+  }
 }
 
 function showEquipDialog(itemId, rootEl) {
