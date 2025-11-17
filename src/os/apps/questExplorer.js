@@ -162,6 +162,23 @@ export const questExplorerApp = {
         }
       }
 
+      // Update event notice
+      const eventNoticeEl = rootEl.querySelector('#qe-event-notice');
+      if (eventNoticeEl) {
+        if (stats.currentEvent && stats.running) {
+          const event = stats.currentEvent;
+          eventNoticeEl.innerHTML = `
+            <div class="event-banner event-${event.id}">
+              <span class="event-name">${event.name}</span>
+              <span class="event-description">${event.description}</span>
+            </div>
+          `;
+          eventNoticeEl.style.display = 'block';
+        } else {
+          eventNoticeEl.style.display = 'none';
+        }
+      }
+
       // Update combat log
       const combatLogEl = rootEl.querySelector('#qe-combat-log');
       if (combatLogEl) {

@@ -9,6 +9,73 @@ const listeners = [];
 let battleNotify = null;
 let currentEnemies = [];
 let combatLog = [];
+let currentEvent = null;
+
+// Special dungeon events
+const DUNGEON_EVENTS = [
+  {
+    id: 'treasure',
+    name: '💰 Treasure Room',
+    description: 'A room filled with riches!',
+    chance: 0.15,
+    effect: (stats) => {
+      const goldBonus = Math.floor(stats.wave * 10);
+      gameState.gold += goldBonus;
+      gameState.lifetimeGold += goldBonus;
+      if (battleNotify) {
+        battleNotify(`Found ${goldBonus} extra gold in treasure room!`, 'gold');
+      }
+    }
+  },
+  {
+    id: 'elite',
+    name: '⚡ Elite Pack',
+    description: 'Powerful enemies ahead!',
+    chance: 0.12,
+    enemyMultiplier: 1.5,
+    enemyCountBonus: 2,
+    lootBonus: 2
+  },
+  {
+    id: 'rest',
+    name: '🛏️ Rest Area',
+    description: 'A safe place to recover.',
+    chance: 0.10,
+    effect: (stats) => {
+      gameState.heroes.forEach(hero => {
+        const healAmount = Math.floor(hero.currentStats.hp * 0.3);
+        hero.currentHp = Math.min(hero.currentStats.hp, hero.currentHp + healAmount);
+      });
+      if (battleNotify) {
+        battleNotify('Heroes rested and recovered 30% HP!', 'success');
+      }
+    }
+  },
+  {
+    id: 'cursed',
+    name: '😈 Cursed Room',
+    description: 'Dark energy empowers your foes!',
+    chance: 0.08,
+    enemyMultiplier: 2.0
+  },
+  {
+    id: 'lucky',
+    name: '🍀 Lucky Break',
+    description: 'Fortune smiles upon you!',
+    chance: 0.05,
+    effect: (stats) => {
+      const xpBonus = Math.floor(stats.wave * 50);
+      gameState.heroes.forEach(hero => {
+        if (!hero.onDispatch) {
+          addXpToHero(hero, xpBonus);
+        }
+      });
+      if (battleNotify) {
+        battleNotify(`Everyone gained ${xpBonus} bonus XP!`, 'level-up');
+      }
+    }
+  }
+];
 
 // Set notification callback (from battle tracker)
 export function setBattleNotification(notifyFn) {
@@ -52,11 +119,51 @@ export function toggleDungeon() {
 
 function spawnEnemies() {
   const isBossWave = gameState.wave % 10 === 0;
-  const enemyCount = isBossWave ? 1 : Math.min(1 + Math.floor(gameState.wave / 5), 5);
 
+  // Roll for special event (not on boss waves)
+  currentEvent = null;
+  if (!isBossWave && Math.random() < 0.3) { // 30% chance for any event
+    const totalChance = DUNGEON_EVENTS.reduce((sum, e) => sum + e.chance, 0);
+    let roll = Math.random() * totalChance;
+
+    for (const event of DUNGEON_EVENTS) {
+      roll -= event.chance;
+      if (roll <= 0) {
+        currentEvent = event;
+        if (battleNotify) {
+          battleNotify(`${event.name}: ${event.description}`, 'quest');
+        }
+        break;
+      }
+    }
+  }
+
+  // Apply immediate event effects (like treasure or rest)
+  if (currentEvent && currentEvent.effect) {
+    currentEvent.effect({ wave: gameState.wave });
+  }
+
+  // Determine enemy count (with event bonuses)
+  let enemyCount = isBossWave ? 1 : Math.min(1 + Math.floor(gameState.wave / 5), 5);
+  if (currentEvent && currentEvent.enemyCountBonus) {
+    enemyCount += currentEvent.enemyCountBonus;
+  }
+
+  // Spawn enemies with event multipliers
+  const enemyMultiplier = currentEvent?.enemyMultiplier || 1.0;
   currentEnemies = [];
   for (let i = 0; i < enemyCount; i++) {
-    currentEnemies.push(createEnemy(gameState.wave, isBossWave));
+    const enemy = createEnemy(gameState.wave, isBossWave);
+
+    // Apply event multiplier
+    if (enemyMultiplier !== 1.0) {
+      enemy.maxHp = Math.floor(enemy.maxHp * enemyMultiplier);
+      enemy.currentHp = enemy.maxHp;
+      enemy.atk = Math.floor(enemy.atk * enemyMultiplier);
+      enemy.def = Math.floor(enemy.def * enemyMultiplier);
+    }
+
+    currentEnemies.push(enemy);
   }
 
   combatLog = [];
@@ -344,7 +451,8 @@ export function getDungeonStats() {
       isBoss: e.isBoss,
       hpPercent: Math.floor((e.currentHp / e.maxHp) * 100)
     })),
-    aliveEnemies: aliveEnemies.length
+    aliveEnemies: aliveEnemies.length,
+    currentEvent: currentEvent // Expose current dungeon event
   };
 }
 
