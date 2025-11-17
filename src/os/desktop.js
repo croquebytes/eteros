@@ -2,11 +2,10 @@ import { windowManager } from './windowManager.js';
 
 const APPS = [
   { id: 'questExplorer', label: 'Quest Explorer' },
-  { id: 'mailClient', label: 'Mail Client' },
-  { id: 'taskScheduler', label: 'Task Scheduler' },
-  { id: 'researchLab', label: 'Research Lab' },
-  { id: 'soulwareStore', label: 'Soulware Store' },
+  { id: 'soulSummoner', label: 'Soul Summoner' },
+  { id: 'taskManager', label: 'Task Manager' },
   { id: 'lootDownloads', label: 'Loot Downloads' },
+  { id: 'soulwareStore', label: 'Soulware Store' },
   { id: 'recycleShrine', label: 'Recycle Shrine' },
   { id: 'systemSigils', label: 'System Sigils' },
 ];
