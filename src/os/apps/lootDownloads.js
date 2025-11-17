@@ -1,9 +1,8 @@
 // ===== Loot Downloads App =====
 // Inventory management and equipment system
 
-import { gameState } from '../../state/gameState.js';
-import { CONFIG } from '../../state/config.js';
-import { equipItem, unequipItem } from '../../state/combatEngine.js';
+import { gameState } from '../../state/enhancedGameState.js';
+import { equipItem, unequipItem, updateHeroStats } from '../../state/heroSystem.js';
 
 export const lootDownloadsApp = {
   id: 'lootDownloads',
@@ -15,7 +14,7 @@ export const lootDownloadsApp = {
 };
 
 function render(rootEl) {
-  const maxSlots = CONFIG.maxInventorySlots + (gameState.upgrades.inventorySlots * CONFIG.upgrades.inventorySlots.effect);
+  const maxSlots = gameState.maxInventorySlots || 50;
   const usedSlots = gameState.inventory.length;
 
   rootEl.innerHTML = `
@@ -57,19 +56,18 @@ function renderInventory(rootEl) {
   }
 
   grid.innerHTML = gameState.inventory.map(item => {
-    const rarityColor = CONFIG.itemRarities[item.rarity].color;
-    const statsText = Object.entries(item.stats)
-      .map(([stat, value]) => `${formatStatName(stat)}: +${value}`)
-      .join('<br>');
+    const rarityLabel = getRarityLabel(item.rarity);
+    const rarityColor = rarityLabel.color;
+    const statsText = formatStats(item);
 
     return `
       <div class="inventory-item" style="border-color: ${rarityColor};">
         <div class="item-header">
-          <span class="item-slot-icon">${getSlotIcon(item.slot)}</span>
-          <span class="item-rarity" style="color: ${rarityColor};">${item.rarity.toUpperCase()}</span>
+          <span class="item-slot-icon">${getSlotIcon(item.type || item.slot)}</span>
+          <span class="item-rarity" style="color: ${rarityColor};">${rarityLabel.text}</span>
         </div>
         <div class="item-name">${item.name}</div>
-        <div class="item-level">Level ${item.level}</div>
+        <div class="item-level">${item.templateId ? 'Soulware' : `Level ${item.level || 1}`}</div>
         <div class="item-stats">${statsText}</div>
         <div class="item-actions">
           <button class="btn-item-action" onclick="window.showEquipDialog('${item.id}')">Equip</button>
@@ -89,7 +87,7 @@ function renderHeroEquipment(rootEl) {
   if (!list) return;
 
   list.innerHTML = gameState.heroes.map(hero => {
-    const classGlyph = CONFIG.heroClasses[hero.class]?.glyph || '⚔️';
+    const classGlyph = hero.role?.[0]?.toUpperCase() || '⚔️';
 
     return `
       <div class="hero-equipment-card">
@@ -122,16 +120,14 @@ function renderEquipmentSlot(hero, slot) {
     `;
   }
 
-  const rarityColor = CONFIG.itemRarities[item.rarity].color;
-  const statsText = Object.entries(item.stats)
-    .map(([stat, value]) => `${formatStatName(stat)}: +${value}`)
-    .join(', ');
+  const rarityInfo = getRarityLabel(item.rarity);
+  const statsText = formatStats(item, ', ');
 
   return `
-    <div class="equipment-slot filled" style="border-color: ${rarityColor};">
+    <div class="equipment-slot filled" style="border-color: ${rarityInfo.color};">
       <div class="slot-header">
         <span class="slot-icon">${slotIcon}</span>
-        <span class="slot-name" style="color: ${rarityColor};">${item.rarity}</span>
+        <span class="slot-name" style="color: ${rarityInfo.color};">${rarityInfo.text}</span>
       </div>
       <div class="slot-item-name">${item.name}</div>
       <div class="slot-stats">${statsText}</div>
@@ -153,18 +149,25 @@ function showEquipDialog(itemId, rootEl) {
   }
 
   // Create a simple selection dialog
-  const heroNames = eligibleHeroes.map((h, i) => `${i + 1}. ${h.name} (${h.class})`).join('\n');
+  const heroNames = eligibleHeroes.map((h, i) => `${i + 1}. ${h.name} (${h.role || 'hero'})`).join('\n');
   const selection = prompt(`Equip ${item.name} to which hero?\n\n${heroNames}\n\nEnter number (1-${eligibleHeroes.length}):`);
 
   if (selection) {
     const index = parseInt(selection) - 1;
     if (index >= 0 && index < eligibleHeroes.length) {
       const hero = eligibleHeroes[index];
-      if (equipItem(hero.id, itemId)) {
+      const result = equipItem(hero, item);
+      if (result.success) {
+        // Remove equipped item from inventory and return old item if present
+        gameState.inventory = gameState.inventory.filter(i => i.id !== itemId);
+        if (result.oldItem) {
+          gameState.inventory.push(result.oldItem);
+        }
+        updateHeroStats(hero);
         alert(`${item.name} equipped to ${hero.name}!`);
         render(rootEl);
       } else {
-        alert('Failed to equip item.');
+        alert(result.error || 'Failed to equip item.');
       }
     }
   }
@@ -175,9 +178,9 @@ function recycleItemPrompt(itemId, rootEl) {
   if (!item) return;
 
   // Calculate recycle value (based on item level and rarity)
-  const rarityMultiplier = CONFIG.itemRarities[item.rarity].statMultiplier;
-  const goldValue = Math.floor(item.level * 2 * rarityMultiplier);
-  const fragmentValue = Math.floor(rarityMultiplier);
+  const rarityMultiplier = getRarityLabel(item.rarity).value;
+  const goldValue = Math.max(1, Math.floor((item.level || 1) * 2 * rarityMultiplier));
+  const fragmentValue = Math.max(1, Math.floor(rarityMultiplier));
 
   const confirmed = confirm(`Recycle ${item.name}?\n\nYou will receive:\n+${goldValue} Gold\n+${fragmentValue} Fragments`);
 
@@ -192,9 +195,12 @@ function recycleItemPrompt(itemId, rootEl) {
 
 window.unequipFromHero = (heroId, slot, rootEl) => {
   const hero = gameState.heroes.find(h => h.id === heroId);
-  if (unequipItem(heroId, slot)) {
-    alert(`Unequipped ${hero.equipment[slot]?.name || 'item'} from ${hero.name}`);
-    // Find the root element - this is a bit hacky but works
+  if (!hero) return;
+  const result = unequipItem(hero, slot);
+  if (result.success) {
+    gameState.inventory.push(result.item);
+    updateHeroStats(hero);
+    alert(`Unequipped ${result.item.name} from ${hero.name}`);
     const appWindow = document.querySelector('[data-app-id="lootDownloads"] .os-window-body');
     if (appWindow) {
       render(appWindow);
@@ -203,10 +209,7 @@ window.unequipFromHero = (heroId, slot, rootEl) => {
 };
 
 function sortInventoryByRarity() {
-  const rarityOrder = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 };
-  gameState.inventory.sort((a, b) => {
-    return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-  });
+  gameState.inventory.sort((a, b) => getRarityLabel(a.rarity).value - getRarityLabel(b.rarity).value);
 }
 
 function getSlotIcon(slot) {
@@ -221,11 +224,38 @@ function getSlotIcon(slot) {
 function formatStatName(stat) {
   const names = {
     attack: 'ATK',
+    atk: 'ATK',
     defense: 'DEF',
+    def: 'DEF',
     maxHp: 'HP',
+    hp: 'HP',
     speed: 'SPD',
+    spd: 'SPD',
     critChance: 'Crit',
     critMultiplier: 'Crit DMG'
   };
   return names[stat] || stat;
+}
+
+function getRarityLabel(rarity) {
+  const rarities = {
+    1: { text: 'COMMON', color: '#9ca3af', value: 1 },
+    2: { text: 'UNCOMMON', color: '#10b981', value: 2 },
+    3: { text: 'RARE', color: '#3b82f6', value: 3 },
+    4: { text: 'EPIC', color: '#a855f7', value: 4 },
+    5: { text: 'LEGENDARY', color: '#f59e0b', value: 5 }
+  };
+
+  if (typeof rarity === 'string') {
+    const text = rarity.toUpperCase();
+    return Object.values(rarities).find(r => r.text === text) || { text, color: '#fff', value: 1 };
+  }
+
+  return rarities[rarity] || { text: 'COMMON', color: '#9ca3af', value: 1 };
+}
+
+function formatStats(item, separator = '<br>') {
+  const stats = item.statBonuses || item.stats || {};
+  const entries = Object.entries(stats).map(([stat, value]) => `${formatStatName(stat)}: +${value}`);
+  return entries.length ? entries.join(separator) : 'No bonuses';
 }

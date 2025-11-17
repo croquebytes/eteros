@@ -15,8 +15,16 @@ export const gameState = {
 
   // Core Progress
   wave: 1,
+  xp: 0,
   currentDungeon: 'story_node_1',
   highestStoryNodeCleared: 0,
+
+  // Dungeon Run State
+  dungeonState: {
+    running: false,
+    timeInWave: 0,
+    waveDuration: 4000
+  },
 
   // Currencies
   gold: 0,
