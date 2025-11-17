@@ -2118,6 +2118,9 @@ body {
 }
 
 .battle-tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px 12px;
   background: linear-gradient(to right, #1a2438, #243854);
   border-bottom: 1px solid rgba(59, 130, 246, 0.3);
@@ -2125,13 +2128,46 @@ body {
   font-weight: 700;
   font-size: 13px;
   color: #60a5fa;
-  cursor: pointer;
-  text-align: center;
   transition: background 0.2s ease;
 }
 
-.battle-tracker-header:hover {
-  background: linear-gradient(to right, #243854, #2a3f61);
+.battle-tracker.minimized .battle-tracker-header {
+  border-radius: 6px;
+  border-bottom: none;
+}
+
+.tracker-title {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tracker-title:hover {
+  color: #93c5fd;
+}
+
+.tracker-minimize-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 3px;
+  color: #60a5fa;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.tracker-minimize-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+  transform: scale(1.1);
 }
 
 .battle-tracker-body {
@@ -2529,5 +2565,197 @@ body {
   background: rgba(59, 130, 246, 0.2);
   border-color: rgba(59, 130, 246, 0.5);
   transform: translateX(4px);
+}
+
+/* ===== Quest Explorer Enhancements ===== */
+
+.party-stats-mini {
+  font-size: 10px;
+  color: #94a3b8;
+  margin: 4px 0;
+  font-weight: 600;
+}
+
+.party-xp-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #10b981, #059669);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.party-xp-text {
+  font-size: 9px;
+  color: #10b981;
+  margin-top: 3px;
+  opacity: 0.9;
+}
+
+.party-status {
+  font-size: 9px;
+  color: #60a5fa;
+  margin-top: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Enemy cards */
+.enemy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.enemy-card {
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.enemy-card.boss {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.5);
+  border-width: 3px;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+.enemy-card.dead {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.enemy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.enemy-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #ef4444;
+}
+
+.enemy-card.boss .enemy-name {
+  color: #a855f7;
+  font-size: 14px;
+}
+
+.boss-badge {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.enemy-stats {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.enemy-hp-bar {
+  height: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.enemy-hp-fill {
+  height: 100%;
+  transition: width 0.3s ease, background 0.3s ease;
+  border-radius: 6px;
+}
+
+.enemy-hp-text {
+  font-size: 10px;
+  text-align: right;
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.enemy-card.boss .enemy-hp-text {
+  color: #a855f7;
+}
+
+.no-enemies {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Combat log */
+.combat-log {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.log-entry {
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  border-left: 3px solid transparent;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.log-hero-attack {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+  color: #10b981;
+}
+
+.log-enemy-attack {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+  color: #ef4444;
+}
+
+.log-enemy-defeated {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.log-hero-defeated {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.log-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-style: italic;
+  font-family: sans-serif;
 }
 

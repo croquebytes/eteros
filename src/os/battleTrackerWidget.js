@@ -10,6 +10,8 @@ export function createBattleTracker() {
   tracker.id = 'battle-tracker';
   tracker.className = 'battle-tracker';
 
+  let isMinimized = false;
+
   // Set up notification callback for dungeon runner
   setBattleNotification((message, type) => {
     showNotification(tracker, message, type);
@@ -26,16 +28,37 @@ export function createBattleTracker() {
   // Make draggable
   makeDraggable(tracker);
 
-  // Click to open Quest Explorer
+  // Create header with controls
   const headerEl = document.createElement('div');
   headerEl.className = 'battle-tracker-header';
-  headerEl.textContent = 'Dungeon Progress';
-  headerEl.title = 'Click to open Quest Explorer';
-  headerEl.addEventListener('click', (e) => {
+
+  const titleEl = document.createElement('span');
+  titleEl.textContent = 'Dungeon Progress';
+  titleEl.className = 'tracker-title';
+  titleEl.title = 'Click to open Quest Explorer';
+  titleEl.addEventListener('click', (e) => {
     e.stopPropagation();
     windowManager.openWindow('questExplorer');
   });
 
+  const minimizeBtn = document.createElement('button');
+  minimizeBtn.className = 'tracker-minimize-btn';
+  minimizeBtn.textContent = '−';
+  minimizeBtn.title = 'Minimize';
+  minimizeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isMinimized = !isMinimized;
+    const body = tracker.querySelector('.battle-tracker-body');
+    if (body) {
+      body.style.display = isMinimized ? 'none' : 'flex';
+    }
+    minimizeBtn.textContent = isMinimized ? '+' : '−';
+    minimizeBtn.title = isMinimized ? 'Expand' : 'Minimize';
+    tracker.classList.toggle('minimized', isMinimized);
+  });
+
+  headerEl.appendChild(titleEl);
+  headerEl.appendChild(minimizeBtn);
   tracker.prepend(headerEl);
 
   return tracker;
