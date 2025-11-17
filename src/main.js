@@ -14,6 +14,7 @@ import { soulwareStoreApp } from './os/apps/soulwareStore.js';
 import { lootDownloadsApp } from './os/apps/lootDownloads.js';
 import { recycleShrineApp } from './os/apps/recycleShrine.js';
 import { systemSigilsApp } from './os/apps/systemSigils.js';
+import { settingsApp, initSettings } from './os/apps/settingsApp.js';
 
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
@@ -24,6 +25,9 @@ const root = document.getElementById('app');
 
 // Initialize toast notification system
 initToastManager();
+
+// Initialize settings system
+initSettings();
 
 const { desktopEl, windowLayerEl} = createDesktop();
 root.appendChild(desktopEl);
@@ -43,6 +47,7 @@ windowManager.registerApp(soulwareStoreApp);
 windowManager.registerApp(lootDownloadsApp);
 windowManager.registerApp(recycleShrineApp);
 windowManager.registerApp(systemSigilsApp);
+windowManager.registerApp(settingsApp);
 
 // Start game systems
 startCombatLoop();
