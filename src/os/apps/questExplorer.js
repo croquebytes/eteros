@@ -51,12 +51,16 @@ export const questExplorerApp = {
       const stats = getCombatStats();
 
       // Update wave and resources
-      document.getElementById('qe-wave').textContent = stats.wave;
-      document.getElementById('qe-gold').textContent = Math.floor(stats.gold);
-      document.getElementById('qe-xp').textContent = Math.floor(stats.xp);
+      const waveEl = rootEl.querySelector('#qe-wave');
+      const goldEl = rootEl.querySelector('#qe-gold');
+      const xpEl = rootEl.querySelector('#qe-xp');
+
+      if (waveEl) waveEl.textContent = stats.wave;
+      if (goldEl) goldEl.textContent = Math.floor(stats.gold);
+      if (xpEl) xpEl.textContent = Math.floor(stats.xp);
 
       // Update party list
-      const partyList = document.getElementById('qe-party-list');
+      const partyList = rootEl.querySelector('#qe-party-list');
       if (partyList) {
         partyList.innerHTML = stats.heroes.map(hero => {
           const hpColor = hero.hpPercent > 50 ? '#10b981' : hero.hpPercent > 25 ? '#f59e0b' : '#ef4444';
@@ -79,7 +83,7 @@ export const questExplorerApp = {
       }
 
       // Update enemy list
-      const enemyList = document.getElementById('qe-enemy-list');
+      const enemyList = rootEl.querySelector('#qe-enemy-list');
       if (enemyList) {
         if (stats.enemies.length === 0) {
           enemyList.innerHTML = '<div class="no-enemies">Preparing next wave...</div>';
@@ -104,7 +108,7 @@ export const questExplorerApp = {
       }
 
       // Update event notice
-      const eventNotice = document.getElementById('qe-event-notice');
+      const eventNotice = rootEl.querySelector('#qe-event-notice');
       if (eventNotice) {
         if (stats.currentEvent) {
           eventNotice.innerHTML = `<div class="event-active">⚡ ${stats.currentEvent.name}</div>`;
@@ -115,7 +119,7 @@ export const questExplorerApp = {
       }
 
       // Update stats panel
-      const statsPanel = document.getElementById('qe-stats');
+      const statsPanel = rootEl.querySelector('#qe-stats');
       if (statsPanel) {
         statsPanel.innerHTML = `
           <div class="stat-row">
