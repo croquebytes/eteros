@@ -14,6 +14,9 @@ const APPS = [
   { id: 'musicPlayer', label: 'Music Player' },
   { id: 'skillTreeApp', label: 'Skill Trees' },
   { id: 'defragger', label: 'Defragger' },
+  // NEW APPS (Phase 2)
+  { id: 'firewallDefense', label: 'Firewall Defense' },
+  { id: 'cosmeticTerminal', label: 'Aesthetic Terminal' },
   { id: 'settings', label: 'Settings' },
 ];
 

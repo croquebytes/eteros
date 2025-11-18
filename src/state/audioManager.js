@@ -317,6 +317,49 @@ export class AudioManager {
   }
 
   /**
+   * Initialize event listeners for adaptive music
+   * Call this after eventBus is available
+   * @param {Object} eventBus - Event bus instance
+   */
+  initEventListeners(eventBus) {
+    if (!eventBus) return;
+
+    // Listen for combat state changes
+    eventBus.on('COMBAT_STARTED', () => {
+      this.adaptToGameState('combat');
+    });
+
+    eventBus.on('COMBAT_ENDED', () => {
+      this.adaptToGameState('idle');
+    });
+
+    eventBus.on('BOSS_ENCOUNTERED', () => {
+      this.adaptToGameState('boss');
+    });
+
+    eventBus.on('BOSS_DEFEATED', () => {
+      this.adaptToGameState('combat'); // Back to regular combat music
+    });
+
+    // Listen for window/app changes (optional)
+    eventBus.on('WINDOW_OPENED', (data) => {
+      if (data && data.appId === 'soulwareStore') {
+        this.adaptToGameState('shop');
+      }
+    });
+
+    eventBus.on('WINDOW_CLOSED', (data) => {
+      if (data && data.appId === 'soulwareStore') {
+        // Return to appropriate music based on current game state
+        // This would check if combat is active, etc.
+        this.adaptToGameState('idle');
+      }
+    });
+
+    console.log('Audio Manager: Event listeners initialized for adaptive music');
+  }
+
+  /**
    * Persist state to localStorage
    */
   saveState() {

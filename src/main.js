@@ -20,11 +20,16 @@ import { settingsApp, initSettings } from './os/apps/settingsApp.js';
 import { musicPlayer } from './os/apps/musicPlayer.js';
 import { skillTreeApp } from './os/apps/skillTreeApp.js';
 import { defragger } from './os/apps/defragger.js';
+// NEW APPS (Phase 2)
+import { firewallDefense } from './os/apps/firewallDefense.js';
+import { cosmeticTerminal } from './os/apps/cosmeticTerminal.js';
 
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
 import { TaskScheduler } from './state/taskScheduler.js';
 import { initSynergySystem } from './state/heroSynergies.js';
+import { audioManager } from './state/audioManager.js';
+import { eventBus } from './state/eventBus.js';
 
 const root = document.getElementById('app');
 
@@ -46,6 +51,12 @@ const taskScheduler = new TaskScheduler(resourceManager);
 // Set resource manager for apps that need it
 skillTreeApp.setResourceManager(resourceManager);
 defragger.setResourceManager(resourceManager);
+firewallDefense.setResourceManager(resourceManager);
+cosmeticTerminal.setResourceManager(resourceManager);
+
+// Initialize adaptive music (Phase 2)
+audioManager.initEventListeners(eventBus);
+audioManager.loadState();
 
 // Register apps with window manager
 windowManager.registerApp(questExplorerApp);
@@ -62,6 +73,9 @@ windowManager.registerApp(settingsApp);
 windowManager.registerApp(musicPlayer);
 windowManager.registerApp(skillTreeApp);
 windowManager.registerApp(defragger);
+// NEW APPS (Phase 2)
+windowManager.registerApp(firewallDefense);
+windowManager.registerApp(cosmeticTerminal);
 
 // Start game systems
 startCombatLoop();
