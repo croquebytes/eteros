@@ -10,6 +10,10 @@ const APPS = [
   { id: 'recycleShrine', label: 'Recycle Shrine' },
   { id: 'systemSigils', label: 'System Sigils' },
   { id: 'speculationTerminal', label: 'Speculation Terminal' },
+  // NEW APPS (Phase 1)
+  { id: 'musicPlayer', label: 'Music Player' },
+  { id: 'skillTreeApp', label: 'Skill Trees' },
+  { id: 'defragger', label: 'Defragger' },
   { id: 'settings', label: 'Settings' },
 ];
 

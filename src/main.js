@@ -16,6 +16,10 @@ import { recycleShrineApp } from './os/apps/recycleShrine.js';
 import { systemSigilsApp } from './os/apps/systemSigils.js';
 import { speculationTerminalApp } from './os/apps/speculationTerminal.js';
 import { settingsApp, initSettings } from './os/apps/settingsApp.js';
+// NEW APPS (Phase 1)
+import { musicPlayer } from './os/apps/musicPlayer.js';
+import { skillTreeApp } from './os/apps/skillTreeApp.js';
+import { defragger } from './os/apps/defragger.js';
 
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
@@ -39,6 +43,10 @@ windowManager.init(windowLayerEl);
 const resourceManager = new ResourceManager();
 const taskScheduler = new TaskScheduler(resourceManager);
 
+// Set resource manager for apps that need it
+skillTreeApp.setResourceManager(resourceManager);
+defragger.setResourceManager(resourceManager);
+
 // Register apps with window manager
 windowManager.registerApp(questExplorerApp);
 windowManager.registerApp(mailClientApp);
@@ -50,6 +58,10 @@ windowManager.registerApp(recycleShrineApp);
 windowManager.registerApp(systemSigilsApp);
 windowManager.registerApp(speculationTerminalApp);
 windowManager.registerApp(settingsApp);
+// NEW APPS (Phase 1)
+windowManager.registerApp(musicPlayer);
+windowManager.registerApp(skillTreeApp);
+windowManager.registerApp(defragger);
 
 // Start game systems
 startCombatLoop();

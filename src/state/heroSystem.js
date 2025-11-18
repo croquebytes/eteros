@@ -85,7 +85,11 @@ export function createHero(templateId, level = 1) {
 
     // Fatigue (from failed dispatches)
     fatigued: false,
-    fatigueEndTime: null
+    fatigueEndTime: null,
+
+    // Skill Tree (NEW)
+    skillPoints: Math.max(0, level - 1), // 1 point per level beyond 1
+    unlockedSkillNodes: [] // Array of skill node IDs
   };
 
   // Calculate current stats
@@ -165,6 +169,13 @@ export function updateHeroStats(hero, systemWideSoulware = []) {
     }
   }
 
+  // Skill Tree bonuses (NEW)
+  if (hero.unlockedSkillNodes && hero.unlockedSkillNodes.length > 0) {
+    // Import calculateSkillBonuses dynamically to avoid circular dependency
+    // For now, apply bonuses inline (full integration in Phase 2)
+    applySkillTreeBonuses(stats, hero);
+  }
+
   // Fatigue debuff
   if (hero.fatigued && hero.fatigueEndTime > Date.now()) {
     for (const statName in stats) {
@@ -205,6 +216,22 @@ function applyStatBonus(stats, bonuses) {
       }
     }
   }
+}
+
+// Apply skill tree bonuses (NEW)
+// Note: Full integration with skillTrees.js in Phase 2
+function applySkillTreeBonuses(stats, hero) {
+  // Stub implementation - will be fully integrated in Phase 2
+  // For now, apply basic multipliers for common stats
+
+  // This is a placeholder - in Phase 2, we'll import and use calculateSkillBonuses from skillTrees.js
+  // For now, we just prepare the structure for skill tree bonuses
+
+  // Example structure that will be replaced:
+  // const bonuses = calculateSkillBonuses(hero);
+  // if (bonuses.attackMultiplier) stats.atk = Math.floor(stats.atk * (1 + bonuses.attackMultiplier));
+  // if (bonuses.defenseMultiplier) stats.def = Math.floor(stats.def * (1 + bonuses.defenseMultiplier));
+  // etc.
 }
 
 // Evaluate conditional effects
@@ -365,4 +392,116 @@ export function getHeroPower(hero) {
 // Get party power level
 export function getPartyPower(heroes) {
   return heroes.reduce((total, hero) => total + getHeroPower(hero), 0);
+}
+
+// ===== SKILL TREE FUNCTIONS =====
+
+/**
+ * Grant skill points to hero (called on level up)
+ * @param {Object} hero - Hero instance
+ * @param {number} amount - Skill points to grant (default: 1)
+ */
+export function grantSkillPoints(hero, amount = 1) {
+  hero.skillPoints = (hero.skillPoints || 0) + amount;
+}
+
+/**
+ * Unlock a skill node for a hero
+ * @param {Object} hero - Hero instance
+ * @param {Object} node - Skill node from skillTrees.js
+ * @param {Object} resourceManager - ResourceManager instance (optional, for resource costs)
+ * @returns {Object} { success: boolean, message: string }
+ */
+export function unlockSkillNode(hero, node, resourceManager = null) {
+  // Ensure arrays exist
+  if (!hero.unlockedSkillNodes) {
+    hero.unlockedSkillNodes = [];
+  }
+  if (hero.skillPoints === undefined) {
+    hero.skillPoints = 0;
+  }
+
+  // Already unlocked
+  if (hero.unlockedSkillNodes.includes(node.id)) {
+    return { success: false, message: 'Skill already unlocked' };
+  }
+
+  // Check prerequisites
+  for (const reqId of node.requires) {
+    if (!hero.unlockedSkillNodes.includes(reqId)) {
+      return { success: false, message: 'Missing prerequisite skill' };
+    }
+  }
+
+  // Check skill points
+  const requiredPoints = node.cost.skillPoints || 0;
+  if (hero.skillPoints < requiredPoints) {
+    return { success: false, message: `Need ${requiredPoints} skill points (have ${hero.skillPoints})` };
+  }
+
+  // Check other resource costs
+  if (node.cost.gold && resourceManager) {
+    if (!resourceManager.canAfford({ gold: node.cost.gold })) {
+      return { success: false, message: `Need ${node.cost.gold} gold` };
+    }
+  }
+  if (node.cost.codeFragments && resourceManager) {
+    if (!resourceManager.canAfford({ codeFragments: node.cost.codeFragments })) {
+      return { success: false, message: `Need ${node.cost.codeFragments} code fragments` };
+    }
+  }
+
+  // Spend resources
+  hero.skillPoints -= requiredPoints;
+
+  if (resourceManager) {
+    if (node.cost.gold) {
+      resourceManager.spend('gold', node.cost.gold);
+    }
+    if (node.cost.codeFragments) {
+      resourceManager.spend('codeFragments', node.cost.codeFragments);
+    }
+  }
+
+  // Unlock node
+  hero.unlockedSkillNodes.push(node.id);
+
+  // Recalculate stats with new skill bonuses
+  updateHeroStats(hero);
+
+  return { success: true, message: `Unlocked: ${node.name}` };
+}
+
+/**
+ * Reset hero skill tree (respec)
+ * @param {Object} hero - Hero instance
+ * @param {Object} resourceManager - ResourceManager instance
+ * @param {number} cost - Gold cost to respec (default: 500)
+ * @returns {Object} { success: boolean, message: string }
+ */
+export function resetSkillTree(hero, resourceManager, cost = 500) {
+  if (!hero.unlockedSkillNodes || hero.unlockedSkillNodes.length === 0) {
+    return { success: false, message: 'No skills to reset' };
+  }
+
+  // Check if can afford respec
+  if (!resourceManager.canAfford({ gold: cost })) {
+    return { success: false, message: `Need ${cost} gold to reset skills` };
+  }
+
+  // Calculate skill points to refund
+  const skillPointsToRefund = hero.unlockedSkillNodes.length; // Simplified: 1 point per node
+  // (In reality, would need to look up each node's cost)
+
+  // Spend gold
+  resourceManager.spend('gold', cost);
+
+  // Reset
+  hero.skillPoints = (hero.skillPoints || 0) + skillPointsToRefund;
+  hero.unlockedSkillNodes = [];
+
+  // Recalculate stats
+  updateHeroStats(hero);
+
+  return { success: true, message: `Skills reset! Refunded ${skillPointsToRefund} skill points.` };
 }
