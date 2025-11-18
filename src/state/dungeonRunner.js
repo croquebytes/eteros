@@ -170,11 +170,14 @@ function spawnEnemies() {
 }
 
 function createEnemy(wave, isBoss) {
-  const baseMult = 1 + (wave * 0.15);
+  // Reduced early game scaling for faster combat
+  // Early waves: 35 HP base (down from 50)
+  // Scaling: 12% per wave (down from 15%) for smoother curve
+  const baseMult = 1 + (wave * 0.12);
   const bossMult = isBoss ? 3 : 1;
 
-  const hp = Math.floor(50 * baseMult * bossMult);
-  const atk = Math.floor(8 * baseMult * bossMult);
+  const hp = Math.floor(35 * baseMult * bossMult);
+  const atk = Math.floor(7 * baseMult * bossMult);
 
   const enemyTypes = isBoss
     ? ['Malware Boss', 'Firewall Sentinel', 'Virus Core', 'System Daemon']
