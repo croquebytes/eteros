@@ -4711,3 +4711,37 @@ body.compact-mode .enemy-card {
   text-shadow: 0 0 5px rgba(255, 68, 255, 0.5);
 }
 
+.btn-apply-cosmetic {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent-blue);
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-apply-cosmetic:hover {
+  background: #298cff;
+  transform: translateY(-1px);
+}
+
+.collection-item.cosmetic-applied {
+  background: rgba(68, 255, 68, 0.1);
+  border-color: #44ff44;
+  box-shadow: 0 0 10px rgba(68, 255, 68, 0.3);
+}
+
+.collection-item.cosmetic-applied .btn-apply-cosmetic {
+  background: #44ff44;
+  color: #000;
+}
+
+.collection-item.cosmetic-applied .btn-apply-cosmetic:hover {
+  background: #66ff66;
+}
+

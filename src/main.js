@@ -30,6 +30,8 @@ import { TaskScheduler } from './state/taskScheduler.js';
 import { initSynergySystem } from './state/heroSynergies.js';
 import { audioManager } from './state/audioManager.js';
 import { eventBus } from './state/eventBus.js';
+import { themeManager } from './state/themeManager.js';
+import { tasksSystem } from './state/tasksSystem.js';
 
 const root = document.getElementById('app');
 
@@ -57,6 +59,12 @@ cosmeticTerminal.setResourceManager(resourceManager);
 // Initialize adaptive music (Phase 2)
 audioManager.initEventListeners(eventBus);
 audioManager.loadState();
+
+// Initialize theme manager (Phase 3)
+themeManager.loadTheme();
+
+// Initialize tasks system (Phase 3)
+tasksSystem.init();
 
 // Register apps with window manager
 windowManager.registerApp(questExplorerApp);

@@ -4,6 +4,8 @@
  * Pure gold sink - NO gameplay advantages
  */
 
+import { themeManager } from '../../state/themeManager.js';
+
 export const cosmeticTerminal = {
   id: 'cosmeticTerminal',
   title: 'Aesthetic Terminal',
@@ -303,14 +305,20 @@ export const cosmeticTerminal = {
     filtered.forEach(cosmetic => {
       const owned = this.ownedCosmetics.has(cosmetic.id);
       const rarity = cosmetic.rarity || 'common';
+      const isApplied = themeManager.isCosmeticApplied(cosmetic.id);
 
       const itemEl = document.createElement('div');
-      itemEl.className = `collection-item ${owned ? 'owned' : 'locked'} rarity-${rarity}`;
+      itemEl.className = `collection-item ${owned ? 'owned' : 'locked'} rarity-${rarity} ${isApplied ? 'cosmetic-applied' : ''}`;
 
       itemEl.innerHTML = `
         <div class="collection-icon">${owned ? this.getTypeIcon(cosmetic.type) : '🔒'}</div>
         <div class="collection-name">${owned ? cosmetic.name : '???'}</div>
         <div class="collection-type">${cosmetic.type}</div>
+        ${owned ? `
+          <button class="btn-apply-cosmetic" data-cosmetic-id="${cosmetic.id}" data-cosmetic-type="${cosmetic.type}">
+            ${isApplied ? '✓ Applied' : 'Apply'}
+          </button>
+        ` : ''}
       `;
 
       // Show tooltip on hover if owned
@@ -319,6 +327,16 @@ export const cosmeticTerminal = {
       }
 
       gridEl.appendChild(itemEl);
+    });
+
+    // Add event listeners for Apply buttons
+    gridEl.querySelectorAll('.btn-apply-cosmetic').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cosmeticId = btn.dataset.cosmeticId;
+        const cosmeticType = btn.dataset.cosmeticType;
+        this.applyCosmetic(cosmeticId, cosmeticType, rootEl);
+      });
     });
   },
 
@@ -365,6 +383,37 @@ export const cosmeticTerminal = {
       } catch (e) {
         console.warn('Failed to load cosmetic state:', e);
       }
+    }
+  },
+
+  /**
+   * Apply a cosmetic
+   * @param {string} cosmeticId - ID of cosmetic to apply
+   * @param {string} cosmeticType - Type of cosmetic (wallpaper, windowFrame, iconPack)
+   * @param {HTMLElement} rootEl - Root element for UI updates
+   */
+  applyCosmetic(cosmeticId, cosmeticType, rootEl) {
+    let success = false;
+
+    switch (cosmeticType) {
+      case 'wallpaper':
+        success = themeManager.applyWallpaper(cosmeticId);
+        break;
+      case 'windowFrame':
+        success = themeManager.applyWindowFrame(cosmeticId);
+        break;
+      case 'iconPack':
+        success = themeManager.applyIconPack(cosmeticId);
+        break;
+      default:
+        console.warn('Unknown cosmetic type:', cosmeticType);
+    }
+
+    if (success) {
+      // Refresh collection to update UI
+      const activeTab = rootEl.querySelector('.collection-tab.tab-active');
+      const type = activeTab ? activeTab.dataset.type : 'all';
+      this.renderCollection(rootEl, type);
     }
   }
 };
