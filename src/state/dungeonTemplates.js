@@ -12,6 +12,7 @@ export const DUNGEON_TEMPLATES = {
     waves: 10,
     baseEnemyLevel: 1,
     enemyLevelPerWave: 0.2,
+    recommendedPartyPower: 50,  // ~Level 1 party
     rewards: {
       goldPerWave: 5,
       xpPerWave: 20,
@@ -33,6 +34,7 @@ export const DUNGEON_TEMPLATES = {
     waves: 10,
     baseEnemyLevel: 5,
     enemyLevelPerWave: 0.3,
+    recommendedPartyPower: 80,  // ~Level 3-5 party
     rewards: {
       goldPerWave: 8,
       xpPerWave: 30,
@@ -54,6 +56,7 @@ export const DUNGEON_TEMPLATES = {
     waves: 15,
     baseEnemyLevel: 15,
     enemyLevelPerWave: 0.4,
+    recommendedPartyPower: 200,  // ~Level 10-15 party
     rewards: {
       goldPerWave: 15,
       xpPerWave: 60,
@@ -141,6 +144,7 @@ export const DUNGEON_TEMPLATES = {
     waves: Infinity,
     baseEnemyLevel: 10,
     enemyLevelPerWave: 0.5,
+    recommendedPartyPower: 150,  // ~Level 8-12 party
     rewards: {
       goldPerWave: 20,      // 2× normal
       xpPerWave: 10,        // 0.5× normal
@@ -159,6 +163,7 @@ export const DUNGEON_TEMPLATES = {
     waves: Infinity,
     baseEnemyLevel: 10,
     enemyLevelPerWave: 0.5,
+    recommendedPartyPower: 150,  // ~Level 8-12 party
     rewards: {
       goldPerWave: 5,       // 0.5× normal
       xpPerWave: 100,       // 2× normal
@@ -177,6 +182,7 @@ export const DUNGEON_TEMPLATES = {
     waves: Infinity,
     baseEnemyLevel: 10,
     enemyLevelPerWave: 0.5,
+    recommendedPartyPower: 150,  // ~Level 8-12 party
     rewards: {
       goldPerWave: 5,       // 0.5× normal
       xpPerWave: 10,        // 0.5× normal

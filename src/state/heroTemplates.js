@@ -9,8 +9,8 @@ export const HERO_TEMPLATES = {
     name: 'Process Guardian',
     rarity: 1,
     role: 'Tank',
-    baseStats: { hp: 100, atk: 6, def: 12, spd: 4, lck: 1 },
-    growthRates: { hp: 10, atk: 0.5, def: 1.5, spd: 0.3, lck: 0.1 },
+    baseStats: { hp: 100, atk: 8, def: 12, spd: 4, lck: 1 },  // ATK +2 for faster early combat
+    growthRates: { hp: 10, atk: 0.6, def: 1.5, spd: 0.3, lck: 0.1 },
     abilities: [
       { id: 'basic_taunt', name: 'Basic Taunt', unlockLevel: 1, cooldown: 5 }
     ]
@@ -21,8 +21,8 @@ export const HERO_TEMPLATES = {
     name: 'Code Striker',
     rarity: 1,
     role: 'DPS',
-    baseStats: { hp: 70, atk: 10, def: 5, spd: 6, lck: 2 },
-    growthRates: { hp: 6, atk: 1.2, def: 0.4, spd: 0.5, lck: 0.15 },
+    baseStats: { hp: 70, atk: 13, def: 5, spd: 6, lck: 2 },  // ATK +3 for faster early combat
+    growthRates: { hp: 6, atk: 1.4, def: 0.4, spd: 0.5, lck: 0.15 },
     abilities: [
       { id: 'basic_strike', name: 'Quick Strike', unlockLevel: 1, cooldown: 3 }
     ]
@@ -33,8 +33,8 @@ export const HERO_TEMPLATES = {
     name: 'Heal.exe',
     rarity: 1,
     role: 'Healer',
-    baseStats: { hp: 80, atk: 5, def: 6, spd: 5, lck: 2 },
-    growthRates: { hp: 7, atk: 0.3, def: 0.5, spd: 0.4, lck: 0.15 },
+    baseStats: { hp: 80, atk: 7, def: 6, spd: 5, lck: 2 },  // ATK +2 for faster early combat
+    growthRates: { hp: 7, atk: 0.4, def: 0.5, spd: 0.4, lck: 0.15 },
     abilities: [
       { id: 'basic_heal', name: 'Minor Heal', unlockLevel: 1, cooldown: 6 }
     ]

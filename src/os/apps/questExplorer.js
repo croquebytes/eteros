@@ -4,6 +4,8 @@
 import { gameState } from '../../state/enhancedGameState.js';
 import { onDungeonUpdate, getDungeonStats, toggleDungeon, stopDungeon, getCombatLog } from '../../state/dungeonRunner.js';
 import { updateHeroStats, calculateXpForLevel } from '../../state/heroSystem.js';
+import { calculatePartyDamage, calculatePartyPower, getDungeonDifficulty, getDifficultyDisplay } from '../../state/partyPowerCalculator.js';
+import { DUNGEON_TEMPLATES } from '../../state/dungeonTemplates.js';
 
 export const questExplorerApp = {
   id: 'questExplorer',
@@ -17,6 +19,31 @@ export const questExplorerApp = {
           <div class="qe-controls">
             <button id="qe-toggle-run" class="btn">Start Dungeon</button>
             <button id="qe-stop-run" class="btn btn-secondary">Stop</button>
+          </div>
+          <div class="qe-party-power">
+            <div class="power-metric">
+              <span class="power-label">Party ATK:</span>
+              <span id="qe-party-damage" class="power-value">0</span>
+            </div>
+            <div class="power-metric">
+              <span class="power-label">Party Power:</span>
+              <span id="qe-party-power" class="power-value">0</span>
+            </div>
+          </div>
+          <div class="qe-dungeon-selector">
+            <button id="qe-dungeon-toggle" class="btn btn-secondary">Select Dungeon ▼</button>
+            <div id="qe-dungeon-panel" class="dungeon-panel" style="display: none;">
+              <div class="dungeon-panel-header">
+                <span>Available Dungeons</span>
+                <div class="dungeon-filters">
+                  <button class="dungeon-filter active" data-filter="all">All</button>
+                  <button class="dungeon-filter" data-filter="story">Story</button>
+                  <button class="dungeon-filter" data-filter="farming">Farming</button>
+                  <button class="dungeon-filter" data-filter="challenge">Challenge</button>
+                </div>
+              </div>
+              <div id="qe-dungeon-list" class="dungeon-list"></div>
+            </div>
           </div>
           <div class="qe-progress">
             <div class="progress-bar"><div id="qe-progress-fill" class="progress-fill"></div></div>
@@ -66,9 +93,129 @@ export const questExplorerApp = {
       updateUI();
     });
 
+    // Dungeon selector toggle
+    rootEl.querySelector('#qe-dungeon-toggle')?.addEventListener('click', () => {
+      const panel = rootEl.querySelector('#qe-dungeon-panel');
+      const btn = rootEl.querySelector('#qe-dungeon-toggle');
+      if (panel && btn) {
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? 'block' : 'none';
+        btn.textContent = isHidden ? 'Select Dungeon ▲' : 'Select Dungeon ▼';
+      }
+    });
+
+    // Dungeon filter buttons
+    let currentFilter = 'all';
+    rootEl.querySelectorAll('.dungeon-filter').forEach(filterBtn => {
+      filterBtn.addEventListener('click', () => {
+        rootEl.querySelectorAll('.dungeon-filter').forEach(b => b.classList.remove('active'));
+        filterBtn.classList.add('active');
+        currentFilter = filterBtn.dataset.filter;
+        renderDungeonList();
+      });
+    });
+
+    // Function to render dungeon list
+    function renderDungeonList() {
+      const dungeonListEl = rootEl.querySelector('#qe-dungeon-list');
+      if (!dungeonListEl) return;
+
+      const partyPower = calculatePartyPower();
+      const dungeons = Object.values(DUNGEON_TEMPLATES);
+
+      // Filter dungeons
+      const filteredDungeons = dungeons.filter(dungeon => {
+        if (currentFilter === 'all') return true;
+        return dungeon.type === currentFilter;
+      });
+
+      if (filteredDungeons.length === 0) {
+        dungeonListEl.innerHTML = '<div class="dungeon-empty">No dungeons match this filter.</div>';
+        return;
+      }
+
+      dungeonListEl.innerHTML = filteredDungeons.map(dungeon => {
+        const difficulty = getDungeonDifficulty(dungeon.recommendedPartyPower || 100);
+        const diffDisplay = getDifficultyDisplay(difficulty);
+        const isSelected = gameState.currentDungeonId === dungeon.id;
+
+        return `
+          <div class="dungeon-card ${isSelected ? 'selected' : ''}" data-dungeon-id="${dungeon.id}">
+            <div class="dungeon-card-header">
+              <span class="dungeon-name">${dungeon.name}</span>
+              <span class="dungeon-difficulty" style="color: ${diffDisplay.color}">
+                ${diffDisplay.emoji} ${diffDisplay.label}
+              </span>
+            </div>
+            <div class="dungeon-card-info">
+              <span class="dungeon-type">${dungeon.type.toUpperCase()}</span>
+              <span class="dungeon-tier">Tier ${dungeon.tier}</span>
+              ${dungeon.waves === Infinity ? '<span class="dungeon-endless">∞ Endless</span>' : `<span class="dungeon-waves">${dungeon.waves} waves</span>`}
+            </div>
+            <div class="dungeon-card-power">
+              <span class="dungeon-power-label">Recommended Power:</span>
+              <span class="dungeon-power-value">${dungeon.recommendedPartyPower || 100}</span>
+            </div>
+            ${isSelected ? '<div class="dungeon-selected-badge">ACTIVE</div>' : ''}
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers for dungeon selection
+      rootEl.querySelectorAll('.dungeon-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const dungeonId = card.dataset.dungeonId;
+          selectDungeon(dungeonId);
+        });
+      });
+    }
+
+    // Function to select a dungeon
+    function selectDungeon(dungeonId) {
+      const wasRunning = gameState.dungeonState.running;
+
+      // Stop current dungeon if running
+      if (wasRunning) {
+        stopDungeon();
+      }
+
+      // Set new dungeon
+      gameState.currentDungeonId = dungeonId;
+      gameState.wave = 1; // Reset wave to 1
+
+      // Close the panel
+      const panel = rootEl.querySelector('#qe-dungeon-panel');
+      const btn = rootEl.querySelector('#qe-dungeon-toggle');
+      if (panel && btn) {
+        panel.style.display = 'none';
+        btn.textContent = 'Select Dungeon ▼';
+      }
+
+      // Refresh UI
+      renderDungeonList();
+      updateUI();
+
+      // Auto-restart if was running
+      if (wasRunning) {
+        toggleDungeon();
+      }
+    }
+
+    // Initial dungeon list render
+    if (!gameState.currentDungeonId) {
+      gameState.currentDungeonId = 'story_node_1'; // Default dungeon
+    }
+    renderDungeonList();
+
     // Update UI function
     function updateUI() {
       const stats = getDungeonStats();
+
+      // Update party power display
+      const partyDamageEl = rootEl.querySelector('#qe-party-damage');
+      const partyPowerEl = rootEl.querySelector('#qe-party-power');
+      if (partyDamageEl) partyDamageEl.textContent = calculatePartyDamage();
+      if (partyPowerEl) partyPowerEl.textContent = calculatePartyPower();
 
       // Update wave and resources
       const waveEl = rootEl.querySelector('#qe-wave');

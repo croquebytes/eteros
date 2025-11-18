@@ -3,6 +3,7 @@
 
 import { gameState, addItemToInventory } from './enhancedGameState.js';
 import { updateHeroStats, addXpToHero } from './heroSystem.js';
+import { getDungeonById } from './dungeonTemplates.js';
 
 let dungeonInterval = null;
 const listeners = [];
@@ -76,6 +77,12 @@ const DUNGEON_EVENTS = [
     }
   }
 ];
+
+// Get current active dungeon
+function getCurrentDungeon() {
+  const dungeonId = gameState.currentDungeonId || 'story_node_1';
+  return getDungeonById(dungeonId);
+}
 
 // Set notification callback (from battle tracker)
 export function setBattleNotification(notifyFn) {
@@ -170,11 +177,17 @@ function spawnEnemies() {
 }
 
 function createEnemy(wave, isBoss) {
-  const baseMult = 1 + (wave * 0.15);
+  // Get current dungeon configuration
+  const dungeon = getCurrentDungeon();
+
+  // Use dungeon-specific scaling
+  // baseMult = 1.0 at wave 1 + (level per wave × wave)
+  const effectiveLevel = (dungeon?.baseEnemyLevel || 1) + (wave * (dungeon?.enemyLevelPerWave || 0.2));
+  const levelMult = 1 + (effectiveLevel * 0.1); // 10% scaling per effective level
   const bossMult = isBoss ? 3 : 1;
 
-  const hp = Math.floor(50 * baseMult * bossMult);
-  const atk = Math.floor(8 * baseMult * bossMult);
+  const hp = Math.floor(35 * levelMult * bossMult);
+  const atk = Math.floor(7 * levelMult * bossMult);
 
   const enemyTypes = isBoss
     ? ['Malware Boss', 'Firewall Sentinel', 'Virus Core', 'System Daemon']
@@ -303,13 +316,17 @@ function loseWave() {
 function completeWave() {
   gameState.dungeonState.timeInWave = 0;
 
+  // Get current dungeon configuration
+  const dungeon = getCurrentDungeon();
+
   // Determine if boss wave
   const isBossWave = gameState.wave % 10 === 0;
 
-  // Simple rewards scale with party power
-  const partyPower = Math.max(1, Math.floor(gameState.heroes.reduce((sum, hero) => sum + hero.currentStats.atk, 0) / 10));
-  const goldReward = (isBossWave ? 10 : 5) + partyPower;
-  const xpReward = (isBossWave ? 6 : 3) + Math.floor(partyPower / 2);
+  // Use dungeon-specific rewards
+  const baseGold = dungeon?.rewards?.goldPerWave || 5;
+  const baseXp = dungeon?.rewards?.xpPerWave || 20;
+  const goldReward = baseGold * (isBossWave ? 2 : 1);
+  const xpReward = baseXp * (isBossWave ? 2 : 1);
 
   // Grant gold
   gameState.gold += goldReward;
@@ -344,8 +361,12 @@ function completeWave() {
 }
 
 function handleItemDrop(isBossWave) {
-  // Drop chance: 30% for normal waves, 100% for boss waves
-  const dropChance = isBossWave ? 1.0 : 0.3;
+  // Get current dungeon configuration
+  const dungeon = getCurrentDungeon();
+
+  // Drop chance: use dungeon's drop rate, or default to 30%
+  const baseDropRate = dungeon?.rewards?.itemDropRate || 0.3;
+  const dropChance = isBossWave ? 1.0 : baseDropRate;
 
   if (Math.random() < dropChance) {
     const item = generateItem(gameState.wave, isBossWave);
