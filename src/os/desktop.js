@@ -9,6 +9,7 @@ const APPS = [
   { id: 'soulwareStore', label: 'Soulware Store' },
   { id: 'recycleShrine', label: 'Recycle Shrine' },
   { id: 'systemSigils', label: 'System Sigils' },
+  { id: 'settings', label: 'Settings' },
 ];
 
 export function createDesktop() {

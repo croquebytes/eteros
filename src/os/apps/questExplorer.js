@@ -2,8 +2,8 @@
 // Dungeon controller and hero status interface
 
 import { gameState } from '../../state/enhancedGameState.js';
-import { onDungeonUpdate, getDungeonStats, toggleDungeon, stopDungeon } from '../../state/dungeonRunner.js';
-import { updateHeroStats } from '../../state/heroSystem.js';
+import { onDungeonUpdate, getDungeonStats, toggleDungeon, stopDungeon, getCombatLog } from '../../state/dungeonRunner.js';
+import { updateHeroStats, calculateXpForLevel } from '../../state/heroSystem.js';
 
 export const questExplorerApp = {
   id: 'questExplorer',
@@ -33,17 +33,16 @@ export const questExplorerApp = {
             <div class="battle-header">
               <div class="battle-wave">Wave: <span id="qe-wave">1</span></div>
               <div class="battle-resources">
-                <div>Gold: <span id="qe-gold">0</span></div>
-                <div>XP: <span id="qe-xp">0</span></div>
+                <div>💰 <span id="qe-gold">0</span></div>
               </div>
             </div>
             <div id="qe-enemy-list" class="enemy-list"></div>
             <div id="qe-event-notice" class="event-notice"></div>
           </div>
         </div>
-          <div class="qe-column qe-quests">
-          <h2 class="window-subtitle">Heroes</h2>
-          <div id="qe-stats" class="stats-panel"></div>
+        <div class="qe-column qe-quests">
+          <h2 class="window-subtitle">Combat Log</h2>
+          <div id="qe-combat-log" class="combat-log"></div>
         </div>
       </div>
     `;
@@ -74,11 +73,9 @@ export const questExplorerApp = {
       // Update wave and resources
       const waveEl = rootEl.querySelector('#qe-wave');
       const goldEl = rootEl.querySelector('#qe-gold');
-      const xpEl = rootEl.querySelector('#qe-xp');
 
       if (waveEl) waveEl.textContent = stats.wave;
       if (goldEl) goldEl.textContent = Math.floor(stats.gold);
-      if (xpEl) xpEl.textContent = Math.floor(stats.xp);
 
       const progressFill = rootEl.querySelector('#qe-progress-fill');
       const progressText = rootEl.querySelector('#qe-progress-text');
@@ -103,7 +100,11 @@ export const questExplorerApp = {
         partyList.innerHTML = gameState.heroes.map(hero => {
           const hpPercent = Math.floor((hero.currentHp / hero.currentStats.hp) * 100);
           const hpColor = hpPercent > 50 ? '#10b981' : hpPercent > 25 ? '#f59e0b' : '#ef4444';
-          const status = hero.onDispatch ? 'On Dispatch' : hero.fatigued ? 'Fatigued' : stats.running ? 'Exploring' : 'Idle';
+          const status = hero.onDispatch ? 'On Dispatch' : hero.fatigued ? 'Fatigued' : stats.running ? 'Fighting' : 'Idle';
+
+          // Calculate XP progress
+          const xpPercent = Math.floor((hero.xp / hero.xpToNextLevel) * 100);
+          const xpRemaining = hero.xpToNextLevel - hero.xp;
 
           return `
             <div class="party-member ${hero.currentHp === 0 ? 'dead' : ''}">
@@ -112,10 +113,18 @@ export const questExplorerApp = {
                 <span class="party-name">${hero.name}</span>
                 <span class="party-level">Lv${hero.level}</span>
               </div>
+              <div class="party-stats-mini">
+                ⚔️${hero.currentStats.atk} 🛡️${hero.currentStats.def} ⚡${hero.currentStats.spd || 0}
+              </div>
               <div class="party-hp-bar">
                 <div class="hp-bar-fill" style="width: ${hpPercent}%; background: ${hpColor};"></div>
               </div>
-              <div class="party-hp-text">${hero.currentHp} / ${hero.currentStats.hp} HP — ${status}</div>
+              <div class="party-hp-text">${hero.currentHp} / ${hero.currentStats.hp} HP</div>
+              <div class="party-xp-bar">
+                <div class="xp-bar-fill" style="width: ${xpPercent}%;"></div>
+              </div>
+              <div class="party-xp-text">XP: ${hero.xp} / ${hero.xpToNextLevel} (${xpRemaining} to next)</div>
+              <div class="party-status">${status}</div>
             </div>
           `;
         }).join('');
@@ -124,22 +133,90 @@ export const questExplorerApp = {
       // Update enemy list
       const enemyList = rootEl.querySelector('#qe-enemy-list');
       if (enemyList) {
-        enemyList.innerHTML = stats.running
-          ? '<div class="no-enemies">Simulating dungeon wave...</div>'
-          : '<div class="no-enemies">Dungeon paused</div>';
+        if (!stats.running) {
+          enemyList.innerHTML = '<div class="no-enemies">Dungeon paused. Click "Start Dungeon" to begin!</div>';
+        } else if (!stats.enemies || stats.enemies.length === 0) {
+          enemyList.innerHTML = '<div class="no-enemies">No enemies... Victory incoming!</div>';
+        } else {
+          enemyList.innerHTML = stats.enemies.map(enemy => {
+            const hpPercent = enemy.hpPercent;
+            const hpColor = hpPercent > 50 ? '#ef4444' : hpPercent > 25 ? '#f59e0b' : '#dc2626';
+            const isDead = enemy.currentHp === 0;
+
+            return `
+              <div class="enemy-card ${isDead ? 'dead' : ''} ${enemy.isBoss ? 'boss' : ''}">
+                <div class="enemy-header">
+                  <span class="enemy-name">${enemy.name}</span>
+                  ${enemy.isBoss ? '<span class="boss-badge">BOSS</span>' : ''}
+                </div>
+                <div class="enemy-stats">
+                  ⚔️${enemy.atk} 🛡️${enemy.def}
+                </div>
+                <div class="enemy-hp-bar">
+                  <div class="enemy-hp-fill" style="width: ${hpPercent}%; background: ${hpColor};"></div>
+                </div>
+                <div class="enemy-hp-text">${enemy.currentHp} / ${enemy.maxHp} HP</div>
+              </div>
+            `;
+          }).join('');
+        }
       }
 
-      // Update stats panel
-      const statsPanel = rootEl.querySelector('#qe-stats');
-      if (statsPanel) {
-        statsPanel.innerHTML = gameState.heroes.map(hero => {
-          return `
-            <div class="stat-row">
-              <div class="stat-label">${hero.name} (Lv${hero.level})</div>
-              <div class="stat-value">HP ${hero.currentStats.hp} | ATK ${hero.currentStats.atk} | DEF ${hero.currentStats.def}</div>
+      // Update event notice
+      const eventNoticeEl = rootEl.querySelector('#qe-event-notice');
+      if (eventNoticeEl) {
+        if (stats.currentEvent && stats.running) {
+          const event = stats.currentEvent;
+          eventNoticeEl.innerHTML = `
+            <div class="event-banner event-${event.id}">
+              <span class="event-name">${event.name}</span>
+              <span class="event-description">${event.description}</span>
             </div>
           `;
-        }).join('');
+          eventNoticeEl.style.display = 'block';
+        } else {
+          eventNoticeEl.style.display = 'none';
+        }
+      }
+
+      // Update combat log
+      const combatLogEl = rootEl.querySelector('#qe-combat-log');
+      if (combatLogEl) {
+        const log = getCombatLog(8);
+        if (log.length === 0) {
+          combatLogEl.innerHTML = '<div class="log-empty">No combat activity yet...</div>';
+        } else {
+          combatLogEl.innerHTML = log.map(entry => {
+            let icon = '⚔️';
+            let className = 'log-entry';
+            let text = '';
+
+            if (entry.type === 'hero-attack') {
+              icon = '⚔️';
+              className = 'log-entry log-hero-attack';
+              text = `${entry.attacker} attacks ${entry.target} for ${entry.damage} damage`;
+            } else if (entry.type === 'enemy-attack') {
+              icon = '💥';
+              className = 'log-entry log-enemy-attack';
+              text = `${entry.attacker} hits ${entry.target} for ${entry.damage} damage`;
+            } else if (entry.type === 'enemy-defeated') {
+              icon = '💀';
+              className = 'log-entry log-enemy-defeated';
+              text = `${entry.enemy} defeated!`;
+            } else if (entry.type === 'hero-defeated') {
+              icon = '☠️';
+              className = 'log-entry log-hero-defeated';
+              text = `${entry.hero} has fallen!`;
+            }
+
+            return `<div class="${className}">${icon} ${text}</div>`;
+          }).join('');
+
+          // Auto-scroll to bottom
+          setTimeout(() => {
+            combatLogEl.scrollTop = combatLogEl.scrollHeight;
+          }, 10);
+        }
       }
     }
   }
