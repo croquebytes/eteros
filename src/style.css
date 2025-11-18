@@ -2593,6 +2593,225 @@ body {
 
 /* ===== Quest Explorer Enhancements ===== */
 
+/* Quest Explorer Header */
+.qe-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(5, 12, 25, 0.8);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+}
+
+.qe-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.qe-party-power {
+  display: flex;
+  gap: 16px;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+}
+
+.power-metric {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.power-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.power-value {
+  font-size: 16px;
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.qe-dungeon-selector {
+  position: relative;
+}
+
+.dungeon-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: #0a1628;
+  border: 2px solid #223355;
+  border-radius: 8px;
+  z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.dungeon-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #223355;
+  background: #0f1e33;
+}
+
+.dungeon-panel-header span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+.dungeon-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.dungeon-filter {
+  padding: 4px 10px;
+  background: #1a2332;
+  border: 1px solid #223355;
+  color: #94a3b8;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dungeon-filter:hover {
+  background: #223355;
+  color: #f5f5f5;
+}
+
+.dungeon-filter.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+.dungeon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.dungeon-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.dungeon-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateX(4px);
+}
+
+.dungeon-card.selected {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+.dungeon-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dungeon-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f5f5f5;
+}
+
+.dungeon-difficulty {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dungeon-card-info {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+
+.dungeon-type {
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.dungeon-tier {
+  color: #94a3b8;
+}
+
+.dungeon-endless {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.dungeon-waves {
+  color: #94a3b8;
+}
+
+.dungeon-card-power {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dungeon-power-label {
+  opacity: 0.8;
+}
+
+.dungeon-power-value {
+  color: #60a5fa;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.dungeon-selected-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #10b981;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.dungeon-empty {
+  text-align: center;
+  padding: 24px;
+  color: #64748b;
+  font-size: 12px;
+}
+
 .party-stats-mini {
   font-size: 10px;
   color: #94a3b8;
