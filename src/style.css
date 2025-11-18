@@ -572,6 +572,9 @@ body {
   text-align: center;
   cursor: default;
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .desktop-icon:hover {
@@ -708,6 +711,10 @@ body {
   display: flex;
   gap: 10px;
   overflow: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 #taskbar {
@@ -847,6 +854,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   padding: 6px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .party-member.dead {
@@ -1068,6 +1079,11 @@ body {
   flex-direction: column;
   gap: 4px;
   font-size: 11px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: grab;
 }
 
 .item-header {
@@ -1146,6 +1162,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   padding: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .hero-card-header {
@@ -1173,6 +1193,10 @@ body {
   border-radius: 4px;
   padding: 6px;
   font-size: 11px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .equipment-slot.filled {
@@ -2861,6 +2885,11 @@ body {
 
 .drag-ghost {
   transition: opacity 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  pointer-events: none;
 }
 
 .drag-ghost-item {
@@ -2891,6 +2920,7 @@ body {
   opacity: 0.4;
   transform: scale(0.95);
   filter: grayscale(0.5);
+  cursor: grabbing;
 }
 
 .equipment-slot.drop-zone-active {
