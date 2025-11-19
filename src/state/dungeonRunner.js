@@ -201,7 +201,7 @@ function createEnemy(wave, isBoss) {
     maxHp: hp,
     currentHp: hp,
     atk: atk,
-    def: Math.floor(2 * baseMult * bossMult),
+    def: Math.floor(2 * levelMult * bossMult),
     isBoss: isBoss,
     lastAttackTime: Date.now()
   };
