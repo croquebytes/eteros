@@ -4745,3 +4745,293 @@ body.compact-mode .enemy-card {
   background: #66ff66;
 }
 
+/* ===== Phase 1: OS Shell Enhancements ===== */
+/* Desktop icon drag/drop, window snapping, minimize/maximize */
+
+/* Desktop Icons - Dragging States */
+.desktop-icon {
+  position: absolute;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.desktop-icon--dragging {
+  opacity: 0.7;
+  cursor: grabbing !important;
+  z-index: 9999;
+  transform: scale(1.05);
+  transition: none;
+}
+
+.desktop-icon:active {
+  cursor: grabbing;
+}
+
+/* Snap Preview Overlay */
+.snap-preview {
+  position: fixed;
+  background: rgba(41, 140, 255, 0.2);
+  border: 2px solid rgba(41, 140, 255, 0.6);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 9998;
+  transition: all 0.15s ease-out;
+  backdrop-filter: blur(2px);
+}
+
+/* Window Dragging State */
+.os-window--dragging {
+  opacity: 0.9;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  transition: none;
+}
+
+/* Window Minimized State */
+.os-window--minimized {
+  display: none !important;
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+/* Window Maximized State */
+.os-window--maximized {
+  border-radius: 0 !important;
+  transition: all 0.2s ease-out;
+}
+
+.os-window--maximized .os-window-titlebar {
+  border-radius: 0 !important;
+}
+
+/* Window Active/Inactive States */
+.os-window--active {
+  box-shadow: 0 8px 32px rgba(41, 140, 255, 0.4);
+}
+
+.os-window:not(.os-window--active) {
+  opacity: 0.85;
+}
+
+.os-window:not(.os-window--active) .os-window-titlebar {
+  background: #1a2332;
+}
+
+/* Window Controls - Add minimize and maximize buttons */
+.os-window-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.os-window-minimize,
+.os-window-maximize,
+.os-window-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #f5f5f5;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.os-window-minimize:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.5);
+  color: #ffc107;
+}
+
+.os-window-maximize:hover {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: rgba(76, 175, 80, 0.5);
+  color: #4caf50;
+}
+
+.os-window-close:hover {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: rgba(244, 67, 54, 0.5);
+  color: #f44336;
+}
+
+.os-window-minimize:active,
+.os-window-maximize:active,
+.os-window-close:active {
+  transform: scale(0.95);
+}
+
+/* Taskbar Button States */
+.taskbar-button {
+  position: relative;
+  transition: all 0.2s;
+}
+
+.taskbar-button--running {
+  background: rgba(41, 140, 255, 0.1);
+  border-bottom: 2px solid rgba(41, 140, 255, 0.5);
+}
+
+.taskbar-button--minimized {
+  background: rgba(255, 193, 7, 0.1);
+  border-bottom: 2px solid rgba(255, 193, 7, 0.5);
+  font-style: italic;
+}
+
+.taskbar-button--active {
+  background: rgba(41, 140, 255, 0.3);
+  border-bottom: 3px solid #298cff;
+  font-weight: bold;
+  transform: translateY(-1px);
+}
+
+.taskbar-button--running:not(.taskbar-button--active):hover {
+  background: rgba(41, 140, 255, 0.2);
+}
+
+/* Desktop Grid Overlay (Debug Mode) */
+#desktop-grid-overlay {
+  pointer-events: none;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+/* Responsive Grid Sizes */
+@media (max-width: 767px) {
+  /* Mobile: Larger touch targets */
+  .desktop-icon {
+    width: 100px;
+    height: 100px;
+  }
+
+  .desktop-icon-glyph {
+    font-size: 48px;
+  }
+
+  .desktop-icon-label {
+    font-size: 12px;
+  }
+
+  .os-window-controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .taskbar-button {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Tablet: Medium icons */
+  .desktop-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .desktop-icon-glyph {
+    font-size: 40px;
+  }
+
+  .desktop-icon-label {
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop: Standard size */
+  .desktop-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .desktop-icon-glyph {
+    font-size: 32px;
+  }
+
+  .desktop-icon-label {
+    font-size: 10px;
+  }
+}
+
+/* Smooth Snap Animations */
+@keyframes snapIn {
+  from {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.os-window[data-snapped="true"] {
+  animation: snapIn 0.2s ease-out;
+}
+
+/* Window Titlebar Cursor */
+.os-window-titlebar {
+  cursor: default;
+}
+
+.os-window:not(.os-window--maximized) .os-window-titlebar:not(:has(.os-window-controls:hover)) {
+  cursor: grab;
+}
+
+.os-window:not(.os-window--maximized) .os-window-titlebar:active {
+  cursor: grabbing;
+}
+
+/* Touch-Friendly Adjustments */
+@media (hover: none) and (pointer: coarse) {
+  /* Touch devices */
+  .desktop-icon {
+    min-width: 80px;
+    min-height: 80px;
+  }
+
+  .os-window-controls button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .taskbar-button {
+    min-height: 44px; /* iOS recommended touch target */
+  }
+}
+
+/* Accessibility - Focus States */
+.os-window:focus-within {
+  outline: 2px solid rgba(41, 140, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.desktop-icon:focus {
+  outline: 2px solid rgba(41, 140, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.taskbar-button:focus {
+  outline: 2px solid rgba(41, 140, 255, 0.8);
+  outline-offset: -2px;
+}
+
+/* Prevent Text Selection During Drag */
+.desktop-icon--dragging *,
+.os-window--dragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ===== End Phase 1 OS Shell Enhancements ===== */
