@@ -3,8 +3,9 @@ import { createBattleTracker } from './battleTrackerWidget.js';
 
 const APPS = [
   { id: 'questExplorer', label: 'Quest Explorer' },
-  { id: 'soulSummoner', label: 'Soul Summoner' },
-  { id: 'taskManager', label: 'Task Manager' },
+  { id: 'mailClient', label: 'Mail Client' },
+  { id: 'taskScheduler', label: 'Task Scheduler' },
+  { id: 'researchLab', label: 'Research Lab' },
   { id: 'lootDownloads', label: 'Loot Downloads' },
   { id: 'soulwareStore', label: 'Soulware Store' },
   { id: 'recycleShrine', label: 'Recycle Shrine' },
