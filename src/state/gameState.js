@@ -2,6 +2,7 @@
 // Central state object with save/load capabilities
 
 import { CONFIG } from './config.js';
+import { showOfflineProgressModal } from '../os/modalManager.js';
 
 // ===== Main Game State =====
 export const gameState = {
@@ -257,8 +258,9 @@ export function loadGame() {
 
     // Calculate offline progress
     const offlineTime = Date.now() - loadedState.lastSaveTime;
+    let offlineRewards = null;
     if (offlineTime > 0) {
-      calculateOfflineProgress(loadedState, offlineTime);
+      offlineRewards = calculateOfflineProgress(loadedState, offlineTime);
     }
 
     // Merge loaded state into gameState
@@ -266,6 +268,14 @@ export function loadGame() {
 
     console.log('Game loaded successfully');
     console.log(`You were offline for ${Math.floor(offlineTime / 1000)} seconds`);
+
+    // Show offline progress modal if there are rewards (with delay to ensure UI is ready)
+    if (offlineRewards && offlineRewards.waves > 0) {
+      setTimeout(() => {
+        showOfflineProgressModal(offlineRewards);
+      }, 500);
+    }
+
     return true;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -275,6 +285,7 @@ export function loadGame() {
 
 /**
  * Calculate offline progress
+ * @returns {Object|null} Rewards object or null if no offline progress
  */
 function calculateOfflineProgress(state, offlineTimeMs) {
   const offlineTime = Math.min(offlineTimeMs, CONFIG.maxOfflineTimeMs);
@@ -292,7 +303,18 @@ function calculateOfflineProgress(state, offlineTimeMs) {
     state.stats.highestWave = Math.max(state.stats.highestWave, state.wave);
 
     console.log(`Offline progress: +${offlineWaves} waves, +${offlineGold} gold, +${offlineXp} XP`);
+
+    // Return rewards for UI display
+    return {
+      waves: offlineWaves,
+      gold: offlineGold,
+      xp: offlineXp,
+      duration: offlineTimeMs,
+      items: [] // Future: generate offline items
+    };
   }
+
+  return null;
 }
 
 /**

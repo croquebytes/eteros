@@ -2,6 +2,7 @@
 // Game configuration and preferences
 
 import { showToast } from '../toastManager.js';
+import { getSettings as getDesktopSettings, updateSettings as updateDesktopSettings } from '../desktopState.js';
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -125,6 +126,49 @@ function render(rootEl) {
               <span class="setting-label">Compact Mode</span>
               <input type="checkbox" id="setting-compact" ${gameSettings.compactMode ? 'checked' : ''}>
               <span class="setting-description">Reduce spacing and font sizes</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Desktop/OS Settings (Phase 2) -->
+        <div class="settings-panel">
+          <h3 class="settings-panel-title">🪟 Desktop & Windows</h3>
+
+          <div class="settings-group">
+            <label class="setting-item">
+              <span class="setting-label">Window Snapping</span>
+              <input type="checkbox" id="setting-snap-enabled" ${(function(){const s=getDesktopSettings();return s.snapEnabled;})() ? 'checked' : ''}>
+              <span class="setting-description">Enable window snapping to screen edges</span>
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-item">
+              <span class="setting-label">Snap Mode</span>
+              <select id="setting-snap-mode" class="setting-select">
+                <option value="halves" ${(function(){const s=getDesktopSettings();return s.snapMode==='halves';})() ? 'selected' : ''}>Halves (Left/Right + Maximize)</option>
+                <option value="quarters" ${(function(){const s=getDesktopSettings();return s.snapMode==='quarters';})() ? 'selected' : ''}>Quarters (4 Corners + Halves)</option>
+              </select>
+              <span class="setting-description">Window snap layout mode</span>
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-item">
+              <span class="setting-label">Show Icon Grid Overlay</span>
+              <input type="checkbox" id="setting-show-grid" ${(function(){const s=getDesktopSettings();return s.showGridOverlay;})() ? 'checked' : ''}>
+              <span class="setting-description">Display grid overlay for desktop icon positioning (debug mode)</span>
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-item">
+              <span class="setting-label">Icon Grid Size</span>
+              <div class="setting-slider-container">
+                <input type="range" id="setting-icon-grid-size" min="64" max="128" step="8" value="${(function(){const s=getDesktopSettings();return s.iconGridSize;})()}">
+                <span id="icon-grid-size-value">${(function(){const s=getDesktopSettings();return s.iconGridSize;})()}px</span>
+              </div>
+              <span class="setting-description">Desktop icon grid spacing (requires page refresh)</span>
             </label>
           </div>
         </div>
@@ -266,6 +310,43 @@ function wireUpListeners(rootEl) {
     });
   }
 
+  // Desktop Settings - Icon Grid Size Slider
+  const iconGridSizeSlider = rootEl.querySelector('#setting-icon-grid-size');
+  const iconGridSizeValue = rootEl.querySelector('#icon-grid-size-value');
+  if (iconGridSizeSlider && iconGridSizeValue) {
+    iconGridSizeSlider.addEventListener('input', (e) => {
+      iconGridSizeValue.textContent = `${e.target.value}px`;
+    });
+  }
+
+  // Desktop Settings - Grid Overlay Toggle (immediate effect)
+  const gridOverlayToggle = rootEl.querySelector('#setting-show-grid');
+  if (gridOverlayToggle) {
+    gridOverlayToggle.addEventListener('change', (e) => {
+      updateDesktopSettings({ showGridOverlay: e.target.checked });
+      applyGridOverlay(e.target.checked);
+      showToast(`Grid overlay ${e.target.checked ? 'enabled' : 'disabled'}`, 'info', 2000);
+    });
+  }
+
+  // Desktop Settings - Snap Enabled Toggle (immediate effect)
+  const snapEnabledToggle = rootEl.querySelector('#setting-snap-enabled');
+  if (snapEnabledToggle) {
+    snapEnabledToggle.addEventListener('change', (e) => {
+      updateDesktopSettings({ snapEnabled: e.target.checked });
+      showToast(`Window snapping ${e.target.checked ? 'enabled' : 'disabled'}`, 'info', 2000);
+    });
+  }
+
+  // Desktop Settings - Snap Mode Select (immediate effect)
+  const snapModeSelect = rootEl.querySelector('#setting-snap-mode');
+  if (snapModeSelect) {
+    snapModeSelect.addEventListener('change', (e) => {
+      updateDesktopSettings({ snapMode: e.target.value });
+      showToast(`Snap mode changed to ${e.target.value}`, 'info', 2000);
+    });
+  }
+
   // Save button
   rootEl.querySelector('#settings-save')?.addEventListener('click', () => {
     saveCurrentSettings(rootEl);
@@ -300,6 +381,10 @@ function saveCurrentSettings(rootEl) {
 
   // Save to localStorage
   if (saveSettings(newSettings)) {
+    // Also save desktop settings (icon grid size)
+    const iconGridSize = parseInt(rootEl.querySelector('#setting-icon-grid-size')?.value ?? 64);
+    updateDesktopSettings({ iconGridSize });
+
     showToast('Settings saved successfully!', 'success');
     applySettings(newSettings);
   } else {
@@ -346,4 +431,74 @@ function applySettings(settings) {
 // Apply settings on initial load
 export function initSettings() {
   applySettings(gameSettings);
+}
+
+/**
+ * Apply grid overlay visibility (Phase 2)
+ */
+function applyGridOverlay(visible) {
+  // Check if grid overlay already exists
+  let overlay = document.getElementById('desktop-grid-overlay');
+
+  if (visible) {
+    // Create grid overlay if it doesn't exist
+    if (!overlay) {
+      const desktop = document.getElementById('desktop');
+      if (desktop) {
+        const desktopSettings = getDesktopSettings();
+        overlay = createGridOverlay(desktopSettings.iconGridSize);
+        overlay.id = 'desktop-grid-overlay';
+        desktop.appendChild(overlay);
+      }
+    } else {
+      overlay.style.display = 'block';
+    }
+  } else {
+    // Hide existing overlay
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * Create grid overlay canvas (helper from desktop.js logic)
+ */
+function createGridOverlay(gridSize) {
+  const overlay = document.createElement('div');
+  overlay.id = 'desktop-grid-overlay';
+  overlay.style.position = 'absolute';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.pointerEvents = 'none';
+  overlay.style.zIndex = '1';
+
+  const canvas = document.createElement('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = 'rgba(100, 149, 237, 0.2)';
+  ctx.lineWidth = 1;
+
+  // Draw vertical lines
+  for (let x = 0; x < canvas.width; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+
+  // Draw horizontal lines
+  for (let y = 0; y < canvas.height; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+
+  overlay.appendChild(canvas);
+  return overlay;
 }
