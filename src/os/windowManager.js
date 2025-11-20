@@ -238,12 +238,8 @@ export const windowManager = {
    */
   makeDraggable(winEl, titleBar, appId) {
     let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
+    let dragOffsetX = 0; // Offset from cursor to window top-left
+    let dragOffsetY = 0;
     let wasMaximized = false;
 
     const self = this;
@@ -256,11 +252,6 @@ export const windowManager = {
     titleBar.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
-
-    // Get initial offset from existing position
-    const rect = winEl.getBoundingClientRect();
-    xOffset = rect.left;
-    yOffset = rect.top;
 
     function dragStart(e) {
       // Don't drag if clicking on controls
@@ -286,17 +277,24 @@ export const windowManager = {
 
         // Position window so cursor is at same relative position in titlebar
         const newRect = winEl.getBoundingClientRect();
-        xOffset = clientX - (newRect.width * relativeX);
-        yOffset = clientY - 10; // Small offset from top
+        const newLeft = clientX - (newRect.width * relativeX);
+        const newTop = clientY - 10; // Small offset from top
 
-        winEl.style.left = xOffset + 'px';
-        winEl.style.top = yOffset + 'px';
+        winEl.style.left = newLeft + 'px';
+        winEl.style.top = newTop + 'px';
+
+        // Set drag offset for this new position
+        dragOffsetX = clientX - newLeft;
+        dragOffsetY = clientY - newTop;
       } else {
         wasMaximized = false;
+
+        // Calculate offset from cursor to window's current position
+        const rect = winEl.getBoundingClientRect();
+        dragOffsetX = clientX - rect.left;
+        dragOffsetY = clientY - rect.top;
       }
 
-      initialX = clientX - xOffset;
-      initialY = clientY - yOffset;
       isDragging = true;
 
       titleBar.style.cursor = 'grabbing';
@@ -313,21 +311,19 @@ export const windowManager = {
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-      currentX = clientX - initialX;
-      currentY = clientY - initialY;
+      // Calculate new position (cursor - offset = top-left of window)
+      let newX = clientX - dragOffsetX;
+      let newY = clientY - dragOffsetY;
 
       // Constrain to viewport
       const maxX = window.innerWidth - 200; // Leave at least 200px visible
       const maxY = window.innerHeight - 100; // Leave at least 100px visible
 
-      currentX = Math.max(0, Math.min(currentX, maxX));
-      currentY = Math.max(0, Math.min(currentY, maxY));
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
 
-      xOffset = currentX;
-      yOffset = currentY;
-
-      winEl.style.left = currentX + 'px';
-      winEl.style.top = currentY + 'px';
+      winEl.style.left = newX + 'px';
+      winEl.style.top = newY + 'px';
 
       // Show snap preview if near edges
       const settings = getSettings();
@@ -348,6 +344,10 @@ export const windowManager = {
         winEl.style.userSelect = '';
         winEl.classList.remove('os-window--dragging');
 
+        // Get current window position
+        const currentLeft = parseFloat(winEl.style.left) || 0;
+        const currentTop = parseFloat(winEl.style.top) || 0;
+
         // Apply snap if in snap zone
         const settings = getSettings();
         if (settings.snapEnabled) {
@@ -362,8 +362,8 @@ export const windowManager = {
             const currentState = getDesktopState().windows[appId];
             if (currentState && !currentState.snap) {
               self.beforeSnapState[appId] = {
-                x: currentX,
-                y: currentY,
+                x: currentLeft,
+                y: currentTop,
                 width: parseInt(winEl.style.width) || 600,
                 height: parseInt(winEl.style.height) || 400
               };
@@ -383,8 +383,8 @@ export const windowManager = {
           } else {
             // No snap, just save position
             updateWindowState(appId, {
-              x: currentX,
-              y: currentY,
+              x: currentLeft,
+              y: currentTop,
               snap: null,
               isMaximized: false
             });
@@ -392,8 +392,8 @@ export const windowManager = {
         } else {
           // Snap disabled, just save position
           updateWindowState(appId, {
-            x: currentX,
-            y: currentY
+            x: currentLeft,
+            y: currentTop
           });
         }
 
