@@ -81,20 +81,82 @@ function renderTaskCard(task) {
   const progress = Math.floor(task.progress * 100);
   const remaining = Math.max(0, task.completionTime - Date.now());
   const remainingStr = formatDuration(remaining);
+  const totalDuration = task.completionTime - task.startTime;
+  const elapsed = Date.now() - task.startTime;
+
+  // Calculate circular progress (SVG)
+  const circumference = 2 * Math.PI * 45; // radius = 45
+  const dashOffset = circumference - (progress / 100) * circumference;
+
+  // Get color based on task type
+  const typeColor = getTypeColor(task.type);
 
   return `
-    <div class="task-card">
-      <div class="task-card-header">
-        <span class="task-type-icon">${getTypeIcon(task.type)}</span>
-        <span class="task-name">${task.name}</span>
-        <button class="btn-cancel-task" data-task-id="${task.id}">✕</button>
-      </div>
-      <div class="task-progress-bar">
-        <div class="task-progress-fill" style="width: ${progress}%"></div>
-      </div>
-      <div class="task-footer">
-        <span class="task-remaining">${remainingStr} remaining</span>
-        <span class="task-percent">${progress}%</span>
+    <div class="task-card ${progress >= 100 ? 'task-card--completing' : ''}" data-task-id="${task.id}">
+      <div class="task-card-layout">
+        <!-- Circular Timer -->
+        <div class="task-timer-circle">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.1)"
+              stroke-width="6"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="${typeColor}"
+              stroke-width="6"
+              stroke-dasharray="${circumference}"
+              stroke-dashoffset="${dashOffset}"
+              stroke-linecap="round"
+              transform="rotate(-90 50 50)"
+              class="task-timer-progress"
+            />
+          </svg>
+          <div class="task-timer-text">
+            <div class="task-timer-percent">${progress}%</div>
+            <div class="task-timer-icon">${getTypeIcon(task.type)}</div>
+          </div>
+        </div>
+
+        <!-- Task Info -->
+        <div class="task-card-info">
+          <div class="task-card-header">
+            <span class="task-name">${task.name}</span>
+            <button class="btn-cancel-task" data-task-id="${task.id}" title="Cancel task">✕</button>
+          </div>
+
+          <div class="task-progress-section">
+            <div class="task-progress-bar-bg">
+              <div
+                class="task-progress-bar-fill"
+                style="width: ${progress}%; background: linear-gradient(90deg, ${typeColor}80, ${typeColor})"
+              ></div>
+            </div>
+            <div class="task-progress-details">
+              <span class="task-remaining">⏱️ ${remainingStr} remaining</span>
+              <span class="task-elapsed">Elapsed: ${formatDuration(elapsed)}</span>
+            </div>
+          </div>
+
+          ${task.reward ? `
+            <div class="task-rewards-preview">
+              <strong>On Completion:</strong>
+              ${Object.entries(task.reward).map(([res, amt]) => `
+                <span class="reward-badge">
+                  <span style="color: ${RESOURCE_INFO[res]?.color || '#fff'}">${RESOURCE_INFO[res]?.icon || '?'}</span>
+                  +${amt}
+                </span>
+              `).join(' ')}
+            </div>
+          ` : ''}
+        </div>
       </div>
     </div>
   `;
@@ -168,6 +230,15 @@ function getTypeIcon(type) {
     defragmentation: '💾'
   };
   return icons[type] || '📋';
+}
+
+function getTypeColor(type) {
+  const colors = {
+    research: '#10b981',      // Green
+    compilation: '#60a5fa',   // Blue
+    defragmentation: '#a855f7' // Purple
+  };
+  return colors[type] || '#8b5cf6';
 }
 
 function formatDuration(ms) {

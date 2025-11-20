@@ -23,6 +23,8 @@ import { defragger } from './os/apps/defragger.js';
 // NEW APPS (Phase 2)
 import { firewallDefense } from './os/apps/firewallDefense.js';
 import { cosmeticTerminal } from './os/apps/cosmeticTerminal.js';
+// NEW APPS (Phase 3)
+import { systemMonitor } from './os/apps/systemMonitor.js';
 
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
@@ -32,6 +34,8 @@ import { audioManager } from './state/audioManager.js';
 import { eventBus } from './state/eventBus.js';
 import { themeManager } from './state/themeManager.js';
 import { tasksSystem } from './state/tasksSystem.js';
+import { initSystemSkills, hookSkillXpGains } from './state/systemSkills.js';
+import { gameState } from './state/gameState.js';
 
 const root = document.getElementById('app');
 
@@ -66,6 +70,10 @@ themeManager.loadTheme();
 // Initialize tasks system (Phase 3)
 tasksSystem.init();
 
+// Initialize system skills (Phase 3)
+initSystemSkills(gameState);
+hookSkillXpGains(gameState);
+
 // Register apps with window manager
 windowManager.registerApp(questExplorerApp);
 windowManager.registerApp(mailClientApp);
@@ -84,6 +92,8 @@ windowManager.registerApp(defragger);
 // NEW APPS (Phase 2)
 windowManager.registerApp(firewallDefense);
 windowManager.registerApp(cosmeticTerminal);
+// NEW APPS (Phase 3)
+windowManager.registerApp(systemMonitor);
 
 // Start game systems
 startCombatLoop();
