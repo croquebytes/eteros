@@ -244,16 +244,7 @@ export const windowManager = {
 
     const self = this;
 
-    titleBar.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-
-    // Support touch events for mobile
-    titleBar.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', dragEnd);
-
-    function dragStart(e) {
+    function handleMouseDown(e) {
       // Don't drag if clicking on controls
       if (e.target.closest('.os-window-controls')) {
         return;
@@ -300,17 +291,35 @@ export const windowManager = {
       titleBar.style.cursor = 'grabbing';
       winEl.style.userSelect = 'none';
       winEl.classList.add('os-window--dragging');
+
+      // Add document listeners only when actively dragging
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
     }
 
-    function drag(e) {
+    function handleMouseMove(e) {
       if (!isDragging) return;
-
       e.preventDefault();
 
-      // Normalize touch/mouse events
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const clientX = e.clientX;
+      const clientY = e.clientY;
 
+      updatePosition(clientX, clientY);
+    }
+
+    function handleTouchMove(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      const clientX = e.touches[0].clientX;
+      const clientY = e.touches[0].clientY;
+
+      updatePosition(clientX, clientY);
+    }
+
+    function updatePosition(clientX, clientY) {
       // Calculate new position (cursor - offset = top-left of window)
       let newX = clientX - dragOffsetX;
       let newY = clientY - dragOffsetY;
@@ -337,70 +346,88 @@ export const windowManager = {
       }
     }
 
-    function dragEnd() {
-      if (isDragging) {
-        isDragging = false;
-        titleBar.style.cursor = 'default';
-        winEl.style.userSelect = '';
-        winEl.classList.remove('os-window--dragging');
+    function handleMouseUp(e) {
+      if (!isDragging) return;
+      finishDrag();
+    }
 
-        // Get current window position
-        const currentLeft = parseFloat(winEl.style.left) || 0;
-        const currentTop = parseFloat(winEl.style.top) || 0;
+    function handleTouchEnd(e) {
+      if (!isDragging) return;
+      finishDrag();
+    }
 
-        // Apply snap if in snap zone
-        const settings = getSettings();
-        if (settings.snapEnabled) {
-          const rect = winEl.getBoundingClientRect();
-          const centerX = rect.left + (rect.width / 2);
-          const topY = rect.top;
+    function finishDrag() {
+      isDragging = false;
+      titleBar.style.cursor = 'default';
+      winEl.style.userSelect = '';
+      winEl.classList.remove('os-window--dragging');
 
-          const snapZone = getSnapZone(centerX, topY, settings.snapMode);
+      // Get current window position
+      const currentLeft = parseFloat(winEl.style.left) || 0;
+      const currentTop = parseFloat(winEl.style.top) || 0;
 
-          if (snapZone) {
-            // Store pre-snap state for restore
-            const currentState = getDesktopState().windows[appId];
-            if (currentState && !currentState.snap) {
-              self.beforeSnapState[appId] = {
-                x: currentLeft,
-                y: currentTop,
-                width: parseInt(winEl.style.width) || 600,
-                height: parseInt(winEl.style.height) || 400
-              };
-            }
+      // Apply snap if in snap zone
+      const settings = getSettings();
+      if (settings.snapEnabled) {
+        const rect = winEl.getBoundingClientRect();
+        const centerX = rect.left + (rect.width / 2);
+        const topY = rect.top;
 
-            // Add snapping animation class
-            winEl.classList.add('os-window--snapping');
+        const snapZone = getSnapZone(centerX, topY, settings.snapMode);
 
-            // Apply snap
-            const updates = applySnapToWindow(winEl, snapZone);
-            updateWindowState(appId, updates);
-
-            // Remove animation class after transition
-            setTimeout(() => {
-              winEl.classList.remove('os-window--snapping');
-            }, 300);
-          } else {
-            // No snap, just save position
-            updateWindowState(appId, {
+        if (snapZone) {
+          // Store pre-snap state for restore
+          const currentState = getDesktopState().windows[appId];
+          if (currentState && !currentState.snap) {
+            self.beforeSnapState[appId] = {
               x: currentLeft,
               y: currentTop,
-              snap: null,
-              isMaximized: false
-            });
+              width: parseInt(winEl.style.width) || 600,
+              height: parseInt(winEl.style.height) || 400
+            };
           }
+
+          // Add snapping animation class
+          winEl.classList.add('os-window--snapping');
+
+          // Apply snap
+          const updates = applySnapToWindow(winEl, snapZone);
+          updateWindowState(appId, updates);
+
+          // Remove animation class after transition
+          setTimeout(() => {
+            winEl.classList.remove('os-window--snapping');
+          }, 300);
         } else {
-          // Snap disabled, just save position
+          // No snap, just save position
           updateWindowState(appId, {
             x: currentLeft,
-            y: currentTop
+            y: currentTop,
+            snap: null,
+            isMaximized: false
           });
         }
-
-        hideSnapPreview();
-        wasMaximized = false;
+      } else {
+        // Snap disabled, just save position
+        updateWindowState(appId, {
+          x: currentLeft,
+          y: currentTop
+        });
       }
+
+      hideSnapPreview();
+      wasMaximized = false;
+
+      // Remove document listeners after drag is complete
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     }
+
+    // Only attach mousedown to the titlebar itself
+    titleBar.addEventListener('mousedown', handleMouseDown);
+    titleBar.addEventListener('touchstart', handleMouseDown, { passive: false });
   },
 
   /**
