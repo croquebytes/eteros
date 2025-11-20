@@ -109,19 +109,8 @@ function makeIconDraggable(iconEl, iconId) {
   let isDragging = false;
   let dragOffsetX = 0; // Offset from cursor to icon top-left
   let dragOffsetY = 0;
-  let startDragCheckX = 0;
-  let startDragCheckY = 0;
 
-  iconEl.addEventListener('mousedown', dragStart);
-  document.addEventListener('mousemove', drag);
-  document.addEventListener('mouseup', dragEnd);
-
-  // Support touch events for mobile
-  iconEl.addEventListener('touchstart', dragStart, { passive: false });
-  document.addEventListener('touchmove', drag, { passive: false });
-  document.addEventListener('touchend', dragEnd);
-
-  function dragStart(e) {
+  function handleMouseDown(e) {
     // Only drag on single click, not double-click
     if (e.detail === 2) {
       return;
@@ -136,51 +125,43 @@ function makeIconDraggable(iconEl, iconId) {
 
     // Calculate offset from cursor to icon's current position
     const rect = iconEl.getBoundingClientRect();
-    const desktop = document.getElementById('desktop');
-    const desktopRect = desktop.getBoundingClientRect();
 
-    // Icon's position relative to desktop
-    const iconLeft = rect.left - desktopRect.left;
-    const iconTop = rect.top - desktopRect.top;
-
-    // Offset from cursor to icon top-left
+    // Offset from cursor (viewport coords) to icon top-left (viewport coords)
     dragOffsetX = clientX - rect.left;
     dragOffsetY = clientY - rect.top;
 
-    // Store start position for drag threshold check
-    startDragCheckX = clientX;
-    startDragCheckY = clientY;
-    isDragging = false; // Will become true on first move
-
+    isDragging = true;
+    iconEl.classList.add('desktop-icon--dragging');
     iconEl.style.userSelect = 'none';
+
+    // Add document listeners only when actively dragging
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
   }
 
-  function drag(e) {
-    // Normalize touch/mouse events
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    // Only start dragging after small movement to distinguish from click
-    if (!isDragging) {
-      const deltaX = Math.abs(clientX - startDragCheckX);
-      const deltaY = Math.abs(clientY - startDragCheckY);
-
-      if (deltaX > 5 || deltaY > 5) {
-        isDragging = true;
-        iconEl.classList.add('desktop-icon--dragging');
-      } else {
-        return;
-      }
-    }
-
+  function handleMouseMove(e) {
+    if (!isDragging) return;
     e.preventDefault();
 
+    updatePosition(e.clientX, e.clientY);
+  }
+
+  function handleTouchMove(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    updatePosition(e.touches[0].clientX, e.touches[0].clientY);
+  }
+
+  function updatePosition(clientX, clientY) {
     // Get desktop bounds
     const desktop = document.getElementById('desktop');
     const desktopRect = desktop.getBoundingClientRect();
     const iconRect = iconEl.getBoundingClientRect();
 
-    // Calculate new position (cursor - offset = top-left of icon)
+    // Calculate new position (cursor - offset = top-left of icon, relative to desktop)
     let newX = clientX - dragOffsetX - desktopRect.left;
     let newY = clientY - dragOffsetY - desktopRect.top;
 
@@ -195,32 +176,50 @@ function makeIconDraggable(iconEl, iconId) {
     iconEl.style.top = newY + 'px';
   }
 
-  function dragEnd() {
-    if (isDragging) {
-      isDragging = false;
-      iconEl.classList.remove('desktop-icon--dragging');
-      iconEl.style.userSelect = '';
-
-      // Snap to grid
-      const settings = getSettings();
-      const gridSize = settings.iconGridSize;
-
-      // Get current position
-      const currentLeft = parseFloat(iconEl.style.left) || 0;
-      const currentTop = parseFloat(iconEl.style.top) || 0;
-
-      const snappedX = Math.round(currentLeft / gridSize) * gridSize;
-      const snappedY = Math.round(currentTop / gridSize) * gridSize;
-
-      iconEl.style.left = snappedX + 'px';
-      iconEl.style.top = snappedY + 'px';
-
-      // Save icon position to state
-      updateIconPosition(iconId, snappedX, snappedY);
-
-      console.log(`Icon ${iconId} moved to (${snappedX}, ${snappedY})`);
-    }
+  function handleMouseUp(e) {
+    if (!isDragging) return;
+    finishDrag();
   }
+
+  function handleTouchEnd(e) {
+    if (!isDragging) return;
+    finishDrag();
+  }
+
+  function finishDrag() {
+    isDragging = false;
+    iconEl.classList.remove('desktop-icon--dragging');
+    iconEl.style.userSelect = '';
+
+    // Snap to grid
+    const settings = getSettings();
+    const gridSize = settings.iconGridSize;
+
+    // Get current position
+    const currentLeft = parseFloat(iconEl.style.left) || 0;
+    const currentTop = parseFloat(iconEl.style.top) || 0;
+
+    const snappedX = Math.round(currentLeft / gridSize) * gridSize;
+    const snappedY = Math.round(currentTop / gridSize) * gridSize;
+
+    iconEl.style.left = snappedX + 'px';
+    iconEl.style.top = snappedY + 'px';
+
+    // Save icon position to state
+    updateIconPosition(iconId, snappedX, snappedY);
+
+    console.log(`Icon ${iconId} moved to (${snappedX}, ${snappedY})`);
+
+    // Remove document listeners after drag is complete
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+  }
+
+  // Only attach mousedown to the icon itself
+  iconEl.addEventListener('mousedown', handleMouseDown);
+  iconEl.addEventListener('touchstart', handleMouseDown, { passive: false });
 }
 
 /**
