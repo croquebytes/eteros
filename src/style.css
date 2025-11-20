@@ -732,7 +732,8 @@ body {
   z-index: 3;
 }
 
-.taskbar-pinned {
+.taskbar-pinned,
+.taskbar-running {
   display: flex;
   gap: 8px;
 }
