@@ -23,6 +23,7 @@ const APPS = [
   { id: 'defragger', label: 'Defragger' },
   { id: 'firewallDefense', label: 'Firewall Defense' },
   { id: 'cosmeticTerminal', label: 'Aesthetic Terminal' },
+  { id: 'systemMonitor', label: 'System Monitor' },
   { id: 'settings', label: 'Settings' },
 ];
 
