@@ -160,6 +160,26 @@ export function showSnapPreview(zone) {
   preview.style.width = zone.width + 'px';
   preview.style.height = zone.height + 'px';
   preview.dataset.snapId = zone.id;
+
+  // Add snap label
+  const label = getSnapLabel(zone.id);
+  preview.setAttribute('data-snap-label', label);
+}
+
+/**
+ * Get human-readable label for snap zone
+ */
+function getSnapLabel(snapId) {
+  const labels = {
+    'maximize': 'MAXIMIZE',
+    'left': 'LEFT HALF',
+    'right': 'RIGHT HALF',
+    'top-left': 'TOP LEFT',
+    'top-right': 'TOP RIGHT',
+    'bottom-left': 'BOTTOM LEFT',
+    'bottom-right': 'BOTTOM RIGHT'
+  };
+  return labels[snapId] || '';
 }
 
 /**

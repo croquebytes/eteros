@@ -369,9 +369,17 @@ export const windowManager = {
               };
             }
 
+            // Add snapping animation class
+            winEl.classList.add('os-window--snapping');
+
             // Apply snap
             const updates = applySnapToWindow(winEl, snapZone);
             updateWindowState(appId, updates);
+
+            // Remove animation class after transition
+            setTimeout(() => {
+              winEl.classList.remove('os-window--snapping');
+            }, 300);
           } else {
             // No snap, just save position
             updateWindowState(appId, {
