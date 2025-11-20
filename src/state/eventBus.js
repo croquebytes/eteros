@@ -87,8 +87,11 @@ export const EVENTS = {
   // Resource events
   RESOURCE_CHANGED: 'resource:changed',
   RESOURCE_INSUFFICIENT: 'resource:insufficient',
+  GOLD_GAINED: 'resource:gold_gained',
+  XP_GAINED: 'resource:xp_gained',
 
   // Combat events
+  HERO_HP_CHANGED: 'combat:hero_hp_changed',
   WAVE_STARTED: 'combat:wave_started',
   WAVE_COMPLETED: 'combat:wave_completed',
   ENEMY_DEFEATED: 'combat:enemy_defeated',
