@@ -5,7 +5,8 @@ import { createBattleTracker } from './battleTrackerWidget.js';
 import {
   getDesktopState,
   updateIconPosition,
-  getSettings
+  getSettings,
+  getGridSize
 } from './desktopState.js';
 
 const APPS = [
@@ -54,10 +55,27 @@ export function createDesktop() {
     icon.dataset.appId = app.id;
     icon.dataset.iconId = iconId;
 
-    // Position icon from state or use default grid position
-    if (iconState) {
+    // Always position icon - use state or calculate default grid position
+    if (iconState && iconState.x !== undefined && iconState.y !== undefined) {
+      // Use saved position
       icon.style.left = iconState.x + 'px';
       icon.style.top = iconState.y + 'px';
+    } else {
+      // Calculate default grid position for first load
+      const gridSize = getGridSize();
+      const padding = 12;
+      const iconsPerColumn = 8;
+      const index = APPS.findIndex(a => a.id === app.id);
+      const column = Math.floor(index / iconsPerColumn);
+      const row = index % iconsPerColumn;
+      const defaultX = padding + (column * gridSize);
+      const defaultY = padding + (row * gridSize);
+
+      icon.style.left = defaultX + 'px';
+      icon.style.top = defaultY + 'px';
+
+      // Save this default position to state
+      updateIconPosition(iconId, defaultX, defaultY);
     }
 
     const glyph = document.createElement('div');
@@ -223,30 +241,15 @@ function makeIconDraggable(iconEl, iconId) {
 }
 
 /**
- * Create taskbar with pinned apps and running windows
+ * Create taskbar with running windows only (Windows OS style)
  */
 function createTaskbar() {
   const taskbar = document.createElement('div');
   taskbar.id = 'taskbar';
 
-  const pinned = document.createElement('div');
-  pinned.className = 'taskbar-pinned';
-
-  const state = getDesktopState();
-
-  APPS.forEach((app) => {
-    const btn = document.createElement('button');
-    btn.className = 'taskbar-button';
-    btn.dataset.appId = app.id;
-    btn.textContent = app.label;
-
-    // Update button state based on window state
-    btn.addEventListener('click', () => {
-      handleTaskbarClick(app.id);
-    });
-
-    pinned.appendChild(btn);
-  });
+  const running = document.createElement('div');
+  running.className = 'taskbar-running';
+  running.id = 'taskbar-running';
 
   const tray = document.createElement('div');
   tray.className = 'taskbar-tray';
@@ -255,7 +258,7 @@ function createTaskbar() {
   clock.id = 'taskbar-clock';
   tray.appendChild(clock);
 
-  taskbar.appendChild(pinned);
+  taskbar.appendChild(running);
   taskbar.appendChild(tray);
 
   function updateClock() {
@@ -269,12 +272,65 @@ function createTaskbar() {
   updateClock();
   setInterval(updateClock, 60_000);
 
-  // Update taskbar button states periodically
+  // Update taskbar buttons periodically to sync with window state
   setInterval(() => {
-    updateTaskbarButtonStates();
+    updateTaskbarButtons();
   }, 500);
 
   return taskbar;
+}
+
+/**
+ * Update taskbar to show only running/open windows
+ */
+function updateTaskbarButtons() {
+  const state = getDesktopState();
+  const runningContainer = document.getElementById('taskbar-running');
+  if (!runningContainer) return;
+
+  // Get currently running windows
+  const runningAppIds = state.taskbar.runningWindowIds || [];
+
+  // Remove buttons for closed windows
+  const existingButtons = runningContainer.querySelectorAll('.taskbar-button');
+  existingButtons.forEach(btn => {
+    const appId = btn.dataset.appId;
+    if (!runningAppIds.includes(appId)) {
+      btn.remove();
+    }
+  });
+
+  // Add buttons for newly opened windows
+  runningAppIds.forEach(appId => {
+    // Check if button already exists
+    let btn = runningContainer.querySelector(`[data-app-id="${appId}"]`);
+
+    if (!btn) {
+      // Create new button
+      const app = APPS.find(a => a.id === appId);
+      if (!app) return;
+
+      btn = document.createElement('button');
+      btn.className = 'taskbar-button';
+      btn.dataset.appId = appId;
+      btn.textContent = app.label;
+
+      btn.addEventListener('click', () => {
+        handleTaskbarClick(appId);
+      });
+
+      runningContainer.appendChild(btn);
+    }
+
+    // Update button visual state
+    const windowState = state.windows[appId];
+    const isMinimized = windowState?.isMinimized || false;
+    const isActive = windowState?.isFocused || false;
+
+    btn.classList.toggle('taskbar-button--running', true);
+    btn.classList.toggle('taskbar-button--minimized', isMinimized);
+    btn.classList.toggle('taskbar-button--active', isActive && !isMinimized);
+  });
 }
 
 /**
@@ -295,27 +351,6 @@ function handleTaskbarClick(appId) {
     // Window is minimized -> restore it
     windowManager.restoreWindow(appId);
   }
-}
-
-/**
- * Update taskbar button visual states based on window states
- */
-function updateTaskbarButtonStates() {
-  const state = getDesktopState();
-  const taskbarButtons = document.querySelectorAll('.taskbar-button');
-
-  taskbarButtons.forEach(btn => {
-    const appId = btn.dataset.appId;
-    const windowState = state.windows[appId];
-    const isRunning = state.taskbar.runningWindowIds.includes(appId);
-    const isMinimized = windowState?.isMinimized || false;
-    const isActive = windowState?.isFocused || false;
-
-    // Update button classes
-    btn.classList.toggle('taskbar-button--running', isRunning);
-    btn.classList.toggle('taskbar-button--minimized', isMinimized);
-    btn.classList.toggle('taskbar-button--active', isActive && !isMinimized);
-  });
 }
 
 /**
