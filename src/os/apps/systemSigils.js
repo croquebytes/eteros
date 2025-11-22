@@ -18,6 +18,21 @@ function render(rootEl) {
   const currentBonus = gameState.sigilPoints * CONFIG.sigilBonusPerPoint;
   const futureBonus = (gameState.sigilPoints + sigilsToGain) * CONFIG.sigilBonusPerPoint;
 
+  // Calculate progress to next sigil
+  const currentSigils = CONFIG.sigilPowerFormula(gameState.lifetimeGold);
+  const nextSigilGold = Math.pow(currentSigils + 1, 2) * 1000;
+  const progressToNext = gameState.lifetimeGold / nextSigilGold;
+  const goldNeeded = Math.max(0, nextSigilGold - gameState.lifetimeGold);
+
+  // Get sample hero stats for preview
+  const sampleHero = gameState.heroes[0] || { maxHp: 100, attack: 10, defense: 5 };
+  const currentStatMultiplier = 1 + currentBonus;
+  const futureStatMultiplier = 1 + futureBonus;
+  const currentPreviewHp = Math.floor(100 * currentStatMultiplier);
+  const futurePreviewHp = Math.floor(100 * futureStatMultiplier);
+  const currentPreviewAtk = Math.floor(10 * currentStatMultiplier);
+  const futurePreviewAtk = Math.floor(10 * futureStatMultiplier);
+
   rootEl.innerHTML = `
     <div class="window-content system-sigils">
       <div class="sigils-panel">
@@ -33,11 +48,24 @@ function render(rootEl) {
           </div>
           <div class="info-section">
             <div class="info-label">Lifetime Gold Earned:</div>
-            <div class="info-value">${Math.floor(gameState.lifetimeGold)}</div>
+            <div class="info-value">${Math.floor(gameState.lifetimeGold).toLocaleString()}</div>
           </div>
           <div class="info-section">
             <div class="info-label">Total Prestiges:</div>
             <div class="info-value">${gameState.totalPrestiges}</div>
+          </div>
+        </div>
+
+        <div class="prestige-divider"></div>
+
+        <div class="progress-section">
+          <h3 class="progress-title">Progress to Next Sigil Point</h3>
+          <div class="sigil-progress-bar-bg">
+            <div class="sigil-progress-bar-fill" style="width: ${Math.min(100, progressToNext * 100).toFixed(1)}%"></div>
+          </div>
+          <div class="progress-text">
+            ${Math.floor(gameState.lifetimeGold).toLocaleString()} / ${Math.floor(nextSigilGold).toLocaleString()} gold
+            ${goldNeeded > 0 ? `(${Math.floor(goldNeeded).toLocaleString()} needed)` : ''}
           </div>
         </div>
 
@@ -65,12 +93,34 @@ function render(rootEl) {
             </div>
           </div>
 
+          ${sigilsToGain > 0 ? `
+            <div class="stat-preview-box">
+              <h4 class="stat-preview-title">Example Stat Changes (Base Level 1 Hero):</h4>
+              <div class="stat-preview-grid">
+                <div class="stat-preview-item">
+                  <span class="stat-preview-name">HP:</span>
+                  <span class="stat-preview-before">${currentPreviewHp}</span>
+                  <span class="stat-preview-arrow">→</span>
+                  <span class="stat-preview-after">${futurePreviewHp}</span>
+                  <span class="stat-preview-diff">(+${futurePreviewHp - currentPreviewHp})</span>
+                </div>
+                <div class="stat-preview-item">
+                  <span class="stat-preview-name">Attack:</span>
+                  <span class="stat-preview-before">${currentPreviewAtk}</span>
+                  <span class="stat-preview-arrow">→</span>
+                  <span class="stat-preview-after">${futurePreviewAtk}</span>
+                  <span class="stat-preview-diff">(+${futurePreviewAtk - currentPreviewAtk})</span>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
           ${sigilsToGain > 0 ?
             `<button class="btn-prestige" id="btn-prestige">
               Prestige Now (Gain ${sigilsToGain} Sigil${sigilsToGain !== 1 ? 's' : ''})
             </button>` :
             `<div class="prestige-warning">
-              You need more lifetime gold to gain Sigils. Keep playing!
+              You need ${Math.floor(goldNeeded).toLocaleString()} more lifetime gold to gain your next Sigil Point. Keep playing!
             </div>`
           }
         </div>
@@ -93,11 +143,11 @@ function render(rootEl) {
           </div>
           <div class="stat-item">
             <span class="stat-name">Total Damage Dealt:</span>
-            <span class="stat-number">${Math.floor(gameState.stats.totalDamageDealt)}</span>
+            <span class="stat-number">${Math.floor(gameState.stats.totalDamageDealt).toLocaleString()}</span>
           </div>
           <div class="stat-item">
             <span class="stat-name">Total Damage Taken:</span>
-            <span class="stat-number">${Math.floor(gameState.stats.totalDamageTaken)}</span>
+            <span class="stat-number">${Math.floor(gameState.stats.totalDamageTaken).toLocaleString()}</span>
           </div>
           <div class="stat-item">
             <span class="stat-name">Items Found:</span>
@@ -105,7 +155,7 @@ function render(rootEl) {
           </div>
           <div class="stat-item">
             <span class="stat-name">Total Gold Earned:</span>
-            <span class="stat-number">${Math.floor(gameState.stats.totalGoldEarned)}</span>
+            <span class="stat-number">${Math.floor(gameState.stats.totalGoldEarned).toLocaleString()}</span>
           </div>
         </div>
       </div>
