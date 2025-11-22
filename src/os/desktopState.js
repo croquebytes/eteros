@@ -51,7 +51,8 @@ export function getDefaultDesktopState() {
       snapEnabled: true,
       snapMode: 'quarters', // 'halves' | 'quarters'
       iconGridSize: gridSize,
-      showGridOverlay: false // Debug mode
+      showGridOverlay: false, // Debug mode
+      isMobileMode: false // Detected at runtime
     }
   };
 }
@@ -117,6 +118,105 @@ export function getGridSize() {
   else {
     return 64;
   }
+}
+
+/**
+ * Get grid cell coordinates for a pixel position
+ */
+export function getGridCell(x, y, gridSize) {
+  return {
+    col: Math.round(x / gridSize),
+    row: Math.round(y / gridSize)
+  };
+}
+
+/**
+ * Get pixel position for a grid cell
+ */
+export function getCellPosition(col, row, gridSize) {
+  return {
+    x: col * gridSize,
+    y: row * gridSize
+  };
+}
+
+/**
+ * Check if a grid cell is occupied by any icon
+ */
+export function isCellOccupied(col, row, excludeIconId = null) {
+  const state = getDesktopState();
+  const gridSize = state.settings.iconGridSize;
+
+  for (const [iconId, iconData] of Object.entries(state.icons)) {
+    if (iconId === excludeIconId) continue;
+
+    const iconCell = getGridCell(iconData.x, iconData.y, gridSize);
+    if (iconCell.col === col && iconCell.row === row) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Find nearest unoccupied cell to a target position
+ */
+export function findNearestUnoccupiedCell(targetCol, targetRow, excludeIconId = null) {
+  // Start with target cell
+  if (!isCellOccupied(targetCol, targetRow, excludeIconId)) {
+    return { col: targetCol, row: targetRow };
+  }
+
+  // Spiral search outward
+  const maxDistance = 20; // Don't search too far
+  for (let distance = 1; distance <= maxDistance; distance++) {
+    // Check cells in a square ring at this distance
+    for (let dx = -distance; dx <= distance; dx++) {
+      for (let dy = -distance; dy <= distance; dy++) {
+        // Only check cells on the perimeter of the square
+        if (Math.abs(dx) === distance || Math.abs(dy) === distance) {
+          const col = targetCol + dx;
+          const row = targetRow + dy;
+
+          // Skip negative positions
+          if (col < 0 || row < 0) continue;
+
+          if (!isCellOccupied(col, row, excludeIconId)) {
+            return { col, row };
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback: return target even if occupied (shouldn't happen)
+  return { col: targetCol, row: targetRow };
+}
+
+/**
+ * Detect if device is mobile
+ */
+export function detectMobileMode() {
+  const isNarrowViewport = window.matchMedia('(max-width: 767px)').matches;
+  const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  return isNarrowViewport || isTouchDevice;
+}
+
+/**
+ * Update mobile mode in settings
+ */
+export function updateMobileMode() {
+  const isMobile = detectMobileMode();
+  const state = getDesktopState();
+
+  if (state.settings.isMobileMode !== isMobile) {
+    state.settings.isMobileMode = isMobile;
+    saveDesktopState(state, true);
+    console.log(`Mobile mode: ${isMobile ? 'ON' : 'OFF'}`);
+  }
+
+  return isMobile;
 }
 
 // ===== State Management =====
