@@ -6,7 +6,12 @@ import {
   getDesktopState,
   updateIconPosition,
   getSettings,
-  getGridSize
+  getGridSize,
+  getGridCell,
+  getCellPosition,
+  isCellOccupied,
+  findNearestUnoccupiedCell,
+  updateMobileMode
 } from './desktopState.js';
 
 const APPS = [
@@ -89,10 +94,43 @@ export function createDesktop() {
     icon.appendChild(glyph);
     icon.appendChild(label);
 
-    // Double-click to open window
-    icon.addEventListener('dblclick', () => {
-      windowManager.openWindow(app.id);
-    });
+    // Mobile mode: single-tap, Desktop mode: double-click
+    const settings = getSettings();
+    const isMobile = settings.isMobileMode;
+
+    if (isMobile) {
+      // Single tap to open on mobile
+      let tapTimeout = null;
+      let lastTap = 0;
+
+      icon.addEventListener('click', (e) => {
+        // Prevent opening during drag
+        if (icon.classList.contains('desktop-icon--dragging')) {
+          return;
+        }
+
+        const now = Date.now();
+        const timeSinceLastTap = now - lastTap;
+
+        // If tapped within 300ms, it's a double-tap (ignore on mobile)
+        if (timeSinceLastTap < 300) {
+          clearTimeout(tapTimeout);
+          return;
+        }
+
+        // Single tap - open after small delay to distinguish from drag start
+        tapTimeout = setTimeout(() => {
+          windowManager.openWindow(app.id);
+        }, 150);
+
+        lastTap = now;
+      });
+    } else {
+      // Desktop: double-click to open
+      icon.addEventListener('dblclick', () => {
+        windowManager.openWindow(app.id);
+      });
+    }
 
     // Make icon draggable
     makeIconDraggable(icon, iconId);
@@ -116,6 +154,25 @@ export function createDesktop() {
     const gridOverlay = createGridOverlay(settings.iconGridSize);
     desktopEl.appendChild(gridOverlay);
   }
+
+  // Add mobile home button
+  if (settings.isMobileMode) {
+    const homeButton = createMobileHomeButton();
+    desktopEl.appendChild(homeButton);
+  }
+
+  // Update mobile mode on resize
+  window.addEventListener('resize', () => {
+    const wasMobile = settings.isMobileMode;
+    updateMobileMode();
+    const isMobile = getSettings().isMobileMode;
+
+    if (wasMobile !== isMobile) {
+      // Mode changed - reload page for simplicity
+      console.log('Mobile mode changed, reloading...');
+      location.reload();
+    }
+  });
 
   return { desktopEl, windowLayerEl };
 }
@@ -209,26 +266,35 @@ function makeIconDraggable(iconEl, iconId) {
     iconEl.classList.remove('desktop-icon--dragging');
     iconEl.style.userSelect = '';
 
-    // Snap to grid
+    // Snap to grid with collision detection
     const settings = getSettings();
     const gridSize = settings.iconGridSize;
 
-    // Get current position
     const currentLeft = parseFloat(iconEl.style.left) || 0;
     const currentTop = parseFloat(iconEl.style.top) || 0;
 
-    const snappedX = Math.round(currentLeft / gridSize) * gridSize;
-    const snappedY = Math.round(currentTop / gridSize) * gridSize;
+    // Get target grid cell
+    const targetCell = getGridCell(currentLeft, currentTop, gridSize);
 
-    iconEl.style.left = snappedX + 'px';
-    iconEl.style.top = snappedY + 'px';
+    // Find nearest unoccupied cell
+    const finalCell = findNearestUnoccupiedCell(
+      targetCell.col,
+      targetCell.row,
+      iconId
+    );
+
+    // Convert cell back to pixels
+    const finalPos = getCellPosition(finalCell.col, finalCell.row, gridSize);
+
+    iconEl.style.left = finalPos.x + 'px';
+    iconEl.style.top = finalPos.y + 'px';
 
     // Save icon position to state
-    updateIconPosition(iconId, snappedX, snappedY);
+    updateIconPosition(iconId, finalPos.x, finalPos.y);
 
-    console.log(`Icon ${iconId} moved to (${snappedX}, ${snappedY})`);
+    console.log(`Icon ${iconId} moved to cell (${finalCell.col}, ${finalCell.row}) = (${finalPos.x}px, ${finalPos.y}px)`);
 
-    // Remove document listeners after drag is complete
+    // Remove document listeners
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
     document.removeEventListener('touchmove', handleTouchMove);
@@ -393,4 +459,56 @@ function createGridOverlay(gridSize) {
 
   overlay.appendChild(canvas);
   return overlay;
+}
+
+/**
+ * Create mobile home button
+ */
+function createMobileHomeButton() {
+  const button = document.createElement('button');
+  button.id = 'mobile-home-button';
+  button.className = 'mobile-home-button';
+  button.innerHTML = `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+  `;
+  button.title = 'Home';
+
+  // Badge for open window count
+  const badge = document.createElement('span');
+  badge.className = 'home-button-badge';
+  button.appendChild(badge);
+
+  button.addEventListener('click', () => {
+    handleHomeButtonClick();
+  });
+
+  // Update badge count periodically
+  setInterval(() => {
+    const state = getDesktopState();
+    const openCount = state.taskbar.runningWindowIds.length;
+    badge.textContent = openCount > 0 ? openCount : '';
+    badge.style.display = openCount > 0 ? 'flex' : 'none';
+  }, 500);
+
+  return button;
+}
+
+/**
+ * Handle mobile home button click
+ */
+function handleHomeButtonClick() {
+  // Minimize all open windows
+  const state = getDesktopState();
+  const openWindows = state.taskbar.runningWindowIds || [];
+
+  openWindows.forEach(appId => {
+    if (!windowManager.isWindowMinimized(appId)) {
+      windowManager.minimizeWindow(appId);
+    }
+  });
+
+  console.log('All windows minimized');
 }

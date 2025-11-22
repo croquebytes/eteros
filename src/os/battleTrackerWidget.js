@@ -4,18 +4,31 @@
 import { onDungeonUpdate, getDungeonStats, setBattleNotification } from '../state/dungeonRunner.js';
 import { gameState } from '../state/enhancedGameState.js';
 import { windowManager } from './windowManager.js';
+import { getDesktopState } from './desktopState.js';
 
 export function createBattleTracker() {
   const tracker = document.createElement('div');
   tracker.id = 'battle-tracker';
   tracker.className = 'battle-tracker';
 
-  let isMinimized = false;
-
-  // Set up notification callback for dungeon runner
+  // Set up notification callback
   setBattleNotification((message, type) => {
     showNotification(tracker, message, type);
   });
+
+  // Check if mobile mode
+  const settings = getDesktopState().settings;
+  const isMobile = settings.isMobileMode;
+
+  if (isMobile) {
+    // Mobile: create drawer-style tracker
+    tracker.classList.add('battle-tracker--mobile');
+    createMobileDrawer(tracker);
+  } else {
+    // Desktop: create draggable widget
+    tracker.classList.add('battle-tracker--desktop');
+    createDesktopWidget(tracker);
+  }
 
   // Initial render
   updateTracker(tracker);
@@ -25,8 +38,49 @@ export function createBattleTracker() {
     updateTracker(tracker);
   });
 
-  // Make draggable
-  makeDraggable(tracker);
+  return tracker;
+}
+
+/**
+ * Create mobile drawer with pull-up handle
+ */
+function createMobileDrawer(tracker) {
+  let isExpanded = false;
+
+  // Create handle/tab
+  const handle = document.createElement('div');
+  handle.className = 'battle-tracker-mobile-handle';
+  handle.innerHTML = `
+    <div class="handle-bar"></div>
+    <div class="handle-summary" id="battle-tracker-summary">
+      <span>Wave 1 | Gold: 0</span>
+    </div>
+  `;
+
+  handle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isExpanded = !isExpanded;
+    tracker.classList.toggle('battle-tracker--expanded', isExpanded);
+
+    const body = tracker.querySelector('.battle-tracker-body');
+    if (body) {
+      body.style.display = isExpanded ? 'flex' : 'none';
+    }
+  });
+
+  tracker.appendChild(handle);
+
+  // Position at bottom
+  tracker.style.left = '0';
+  tracker.style.bottom = '40px'; // Above taskbar
+  tracker.style.width = '100%';
+}
+
+/**
+ * Create desktop draggable widget
+ */
+function createDesktopWidget(tracker) {
+  let isMinimized = false;
 
   // Create header with controls
   const headerEl = document.createElement('div');
@@ -59,9 +113,18 @@ export function createBattleTracker() {
 
   headerEl.appendChild(titleEl);
   headerEl.appendChild(minimizeBtn);
-  tracker.prepend(headerEl);
+  tracker.appendChild(headerEl);
 
-  return tracker;
+  // Make draggable
+  makeDraggable(tracker);
+
+  // Set initial position (bottom right)
+  setTimeout(() => {
+    const x = window.innerWidth - 320;
+    const y = window.innerHeight - 450;
+    tracker.style.left = x + 'px';
+    tracker.style.top = y + 'px';
+  }, 100);
 }
 
 function updateTracker(tracker) {
@@ -115,6 +178,12 @@ function updateTracker(tracker) {
 
   if (!tracker.contains(bodyEl)) {
     tracker.appendChild(bodyEl);
+  }
+
+  // Update mobile summary if in mobile mode
+  const summary = document.getElementById('battle-tracker-summary');
+  if (summary) {
+    summary.innerHTML = `<span>Wave ${stats.wave} | Gold: ${Math.floor(stats.gold)}</span>`;
   }
 
   // Show level-up notification if any hero just leveled up

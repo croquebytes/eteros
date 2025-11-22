@@ -7,6 +7,7 @@ import { windowManager } from './os/windowManager.js';
 import { gameState, startAutoSave, updateGameState } from './state/enhancedGameState.js';
 import { initToastManager } from './os/toastManager.js';
 import { startCombatLoop } from './state/combatEngine.js';
+import { updateMobileMode } from './os/desktopState.js';
 
 // Import existing apps
 import { questExplorerApp } from './os/apps/questExplorer.js';
@@ -50,6 +51,9 @@ initToastManager();
 
 // Initialize settings system
 initSettings();
+
+// Detect and set mobile mode
+updateMobileMode();
 
 // Initialize UI
 const root = document.getElementById('app');
