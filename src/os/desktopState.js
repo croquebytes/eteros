@@ -4,6 +4,7 @@
 
 const STORAGE_KEY = 'reincarnos:desktop:state';
 const SAVE_DEBOUNCE_MS = 500; // Debounce saves during drag operations
+export const MAX_ICON_ROWS = 7; // Limit vertical grid to 7 rows per column
 
 // ===== Default State Factory =====
 
@@ -87,7 +88,7 @@ function autoArrangeIconsInGrid(gridSize) {
 
   const icons = {};
   const padding = 16; // Padding from edges
-  const iconsPerColumn = 7; // Max icons per column before wrapping
+  const iconsPerColumn = MAX_ICON_ROWS; // Max icons per column before wrapping
 
   apps.forEach((app, index) => {
     const column = Math.floor(index / iconsPerColumn);
@@ -131,9 +132,12 @@ export function getGridSize() {
  */
 export function getGridCell(x, y, gridSize) {
   const padding = 16; // Match the padding from autoArrangeIconsInGrid
+  const col = Math.round((x - padding) / gridSize);
+  const row = Math.round((y - padding) / gridSize);
+
   return {
-    col: Math.round((x - padding) / gridSize),
-    row: Math.round((y - padding) / gridSize)
+    col: Math.max(0, col),
+    row: Math.max(0, Math.min(row, MAX_ICON_ROWS - 1))
   };
 }
 
@@ -188,7 +192,7 @@ export function findNearestUnoccupiedCell(targetCol, targetRow, excludeIconId = 
           const row = targetRow + dy;
 
           // Skip negative positions
-          if (col < 0 || row < 0) continue;
+          if (col < 0 || row < 0 || row >= MAX_ICON_ROWS) continue;
 
           if (!isCellOccupied(col, row, excludeIconId)) {
             return { col, row };

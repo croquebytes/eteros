@@ -888,14 +888,17 @@ body {
   position: absolute;
   top: 16px;
   left: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-rows: var(--desktop-icon-cell, 104px);
+  grid-auto-columns: var(--desktop-icon-cell, 104px);
+  gap: 20px 28px;
   z-index: 2;
 }
 
 .desktop-icon {
-  width: 96px;
+  width: var(--desktop-icon-size, 96px);
+  height: var(--desktop-icon-size, 96px);
   padding: 8px;
   border-radius: 8px;
   text-align: center;
@@ -936,10 +939,14 @@ body {
   font-size: 12px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 4px rgba(0, 0, 0, 0.6);
   line-height: 1.4;
-  word-wrap: break-word;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  hyphens: manual;
   max-height: 38px;
   overflow: hidden;
   font-weight: 500;
+  text-align: center;
 }
 
 /* ===== Window Layer ===== */
