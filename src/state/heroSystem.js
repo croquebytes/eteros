@@ -2,6 +2,14 @@
 // Hero creation, leveling, stat calculation, and equipment
 
 import { HERO_TEMPLATES } from './heroTemplates.js';
+import { getNodeById } from '../data/skillTrees.js';
+import { applyHeroSynergyBonuses } from './heroSynergies.js';
+
+// Helper to get research bonuses (defined later to avoid circular dependency issues)
+let researchBonusesGetter = null;
+export function setResearchBonusesGetter(getter) {
+  researchBonusesGetter = getter;
+}
 
 // XP Curve Configuration
 export const XP_CURVE = {
@@ -132,6 +140,22 @@ export function updateHeroStats(hero, systemWideSoulware = []) {
     }
   }
 
+  // Research bonuses (applied early to base stats)
+  if (researchBonusesGetter) {
+    const research = researchBonusesGetter();
+    if (research) {
+      // Hero damage boost
+      if (research.heroDamageBoost && research.heroDamageBoost > 1) {
+        stats.atk = Math.floor(stats.atk * research.heroDamageBoost);
+      }
+
+      // Attack speed boost
+      if (research.heroAttackSpeedBoost && research.heroAttackSpeedBoost > 1) {
+        stats.spd = Math.floor(stats.spd * research.heroAttackSpeedBoost);
+      }
+    }
+  }
+
   // Equipment bonuses
   for (const slot in hero.equipment) {
     const item = hero.equipment[slot];
@@ -169,12 +193,17 @@ export function updateHeroStats(hero, systemWideSoulware = []) {
     }
   }
 
-  // Skill Tree bonuses (NEW)
+  // Skill Tree bonuses
   if (hero.unlockedSkillNodes && hero.unlockedSkillNodes.length > 0) {
-    // Import calculateSkillBonuses dynamically to avoid circular dependency
-    // For now, apply bonuses inline (full integration in Phase 2)
     applySkillTreeBonuses(stats, hero);
   }
+
+  // Hero Synergy bonuses (apply synergies from party composition)
+  // Apply synergies to each stat type
+  stats.hp = applyHeroSynergyBonuses(hero, stats.hp, 'maxHp');
+  stats.atk = applyHeroSynergyBonuses(hero, stats.atk, 'attack');
+  stats.def = applyHeroSynergyBonuses(hero, stats.def, 'defense');
+  stats.spd = applyHeroSynergyBonuses(hero, stats.spd, 'speed');
 
   // Fatigue debuff
   if (hero.fatigued && hero.fatigueEndTime > Date.now()) {
@@ -218,7 +247,7 @@ function applyStatBonus(stats, bonuses) {
   }
 }
 
-// Apply skill tree bonuses (PHASE 2: FULL IMPLEMENTATION)
+// Apply skill tree bonuses
 function applySkillTreeBonuses(stats, hero) {
   if (!hero.unlockedSkillNodes || hero.unlockedSkillNodes.length === 0) {
     return;
@@ -227,7 +256,7 @@ function applySkillTreeBonuses(stats, hero) {
   // Calculate aggregated bonuses from all unlocked skill nodes
   const bonuses = calculateSkillBonusesInternal(hero);
 
-  // Apply stat multipliers
+  // Apply stat multipliers to base stats
   if (bonuses.attackMultiplier) {
     stats.atk = Math.floor(stats.atk * (1 + bonuses.attackMultiplier));
   }
@@ -241,7 +270,10 @@ function applySkillTreeBonuses(stats, hero) {
     stats.spd = Math.floor(stats.spd * (1 + bonuses.speedBonus));
   }
 
-  // Store aggregated bonuses on hero for other systems to use
+  // Apply derived stats (these aren't in base stats but need to be tracked)
+  // Note: critChance, dodgeChance etc. will be stored in skillBonuses for combat to use
+
+  // Store aggregated bonuses on hero for combat and other systems to use
   hero.skillBonuses = bonuses;
 }
 
@@ -269,7 +301,10 @@ function calculateSkillBonusesInternal(hero) {
     combatRegen: 0,
     reflectChance: 0,
     armorPenetration: 0,
-    attackSpeed: 0
+    attackSpeed: 0,
+    lifesteal: 0,
+    blockChance: 0,
+    thorns: 0
   };
 
   if (!hero.unlockedSkillNodes || hero.unlockedSkillNodes.length === 0) {
@@ -277,12 +312,18 @@ function calculateSkillBonusesInternal(hero) {
   }
 
   // Aggregate effects from all unlocked nodes
-  // Note: We avoid importing skillTrees.js to prevent circular dependency
-  // The skill tree data is available via the app when needed
   hero.unlockedSkillNodes.forEach(nodeId => {
-    // Skill effects are applied via the skillTreeApp when unlocking
-    // This function just ensures the structure is available
-    // The actual stat bonuses are calculated at unlock time
+    const node = getNodeById(nodeId);
+    if (!node || !node.effects) return;
+
+    // Aggregate all numeric and boolean effects
+    for (const [key, value] of Object.entries(node.effects)) {
+      if (typeof bonuses[key] === 'number' && typeof value === 'number') {
+        bonuses[key] += value;
+      } else if (typeof bonuses[key] === 'boolean' && value === true) {
+        bonuses[key] = true;
+      }
+    }
   });
 
   return bonuses;
