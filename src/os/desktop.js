@@ -688,31 +688,35 @@ function changeWallpaper() {
  * Arrange icons in default grid layout
  */
 function arrangeIcons() {
-  const gridSize = getGridSize();
-  const padding = 12;
-  const iconsPerColumn = 8;
-
   const state = getDesktopState();
-  const icons = Object.values(state.icons);
+  const gridSize = state.settings.iconGridSize;
 
-  icons.forEach((iconData, index) => {
-    const column = Math.floor(index / iconsPerColumn);
-    const row = index % iconsPerColumn;
+  // Preserve the intended icon order from the app list
+  const orderedIconIds = APPS
+    .map(app => `icon-${app.id}`)
+    .filter(iconId => Boolean(state.icons[iconId]));
 
-    const x = padding + (column * gridSize);
-    const y = padding + (row * gridSize);
+  let column = 0;
+  let row = 0;
 
-    updateIconPosition(iconData.id, x, y);
+  orderedIconIds.forEach((iconId) => {
+    const { x, y } = getCellPosition(column, row, gridSize);
+    updateIconPosition(iconId, x, y);
 
-    // Update DOM element position
-    const iconEl = document.querySelector(`[data-icon-id="${iconData.id}"]`);
+    const iconEl = document.querySelector(`[data-icon-id="${iconId}"]`);
     if (iconEl) {
-      iconEl.style.left = x + 'px';
-      iconEl.style.top = y + 'px';
+      iconEl.style.left = `${x}px`;
+      iconEl.style.top = `${y}px`;
+    }
+
+    row += 1;
+    if (row >= MAX_ICON_ROWS) {
+      row = 0;
+      column += 1;
     }
   });
 
-  console.log('Icons arranged in grid layout');
+  console.log('Icons arranged into a seven-row desktop grid');
 }
 
 /**
