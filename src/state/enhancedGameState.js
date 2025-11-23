@@ -1,7 +1,7 @@
 // ===== Enhanced ReincarnOS Game State =====
 // Comprehensive game state with all new systems
 
-import { createHero, addXpToHero, updateHeroStats } from './heroSystem.js';
+import { createHero, addXpToHero, updateHeroStats, calculateXpForLevel } from './heroSystem.js';
 import { createGachaState } from './gachaSystem.js';
 import { createDispatchState, updateDispatches } from './dispatchSystem.js';
 
@@ -511,6 +511,31 @@ export function performPrestige() {
     unlockedApps: [...gameState.unlockedApps]
   };
 
+  // Reset heroes (keep existing heroes but reset their levels and equipment)
+  gameState.heroes.forEach(hero => {
+    hero.level = 1;
+    hero.xp = 0;
+    hero.xpToNextLevel = calculateXpForLevel(2);
+    hero.skillPoints = 0;
+    hero.unlockedSkillNodes = [];
+    hero.equipment = {
+      weapon: null,
+      armor: null,
+      accessory: null
+    };
+    hero.awakenings = 0;
+    hero.currentHp = 0;
+    hero.lastAttackTime = 0;
+    hero.statusEffects = [];
+    hero.onDispatch = false;
+    hero.dispatchId = null;
+    hero.dispatchEndTime = null;
+    hero.fatigued = false;
+    hero.fatigueEndTime = null;
+    // Recalculate stats for level 1
+    updateHeroStats(hero);
+  });
+
   // Reset most of the game state
   Object.assign(gameState, {
     wave: 1,
@@ -525,11 +550,6 @@ export function performPrestige() {
       codeFragments: 0,
       eventTokens: 0
     },
-    heroes: [
-      createHero('basic_warrior', 1),
-      createHero('basic_dps', 1),
-      createHero('basic_support', 1)
-    ],
     activeParty: [],
     inventory: [],
     systemWideSoulware: [],

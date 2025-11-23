@@ -19,6 +19,10 @@ export const questExplorerApp = {
           <div class="qe-controls">
             <button id="qe-toggle-run" class="btn">Start Dungeon</button>
             <button id="qe-stop-run" class="btn btn-secondary">Stop</button>
+            <div id="qe-running-badge" class="running-badge" style="display: none;">
+              <span class="running-badge-icon">▶</span>
+              <span class="running-badge-text">RUNNING</span>
+            </div>
           </div>
           <div class="qe-party-power">
             <div class="power-metric">
@@ -228,6 +232,12 @@ export const questExplorerApp = {
       const progressText = rootEl.querySelector('#qe-progress-text');
       const toggleBtn = rootEl.querySelector('#qe-toggle-run');
 
+      // Update running badge
+      const runningBadge = rootEl.querySelector('#qe-running-badge');
+      if (runningBadge) {
+        runningBadge.style.display = stats.running ? 'flex' : 'none';
+      }
+
       if (progressFill) {
         progressFill.style.width = `${stats.progress}%`;
       }
@@ -236,6 +246,8 @@ export const questExplorerApp = {
       }
       if (toggleBtn) {
         toggleBtn.textContent = stats.running ? 'Pause Dungeon' : 'Start Dungeon';
+        toggleBtn.classList.toggle('btn-primary', !stats.running);
+        toggleBtn.classList.toggle('btn-warning', stats.running);
       }
 
       // Update party list

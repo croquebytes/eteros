@@ -438,3 +438,170 @@ Phase 3 successfully implemented gameplay systems alignment with OS concepts:
 
 **Commit:** `feature/phase3-gameplay-systems`
 
+---
+
+## Systems & Features Implementation – November 23, 2025
+
+**Date:** 2025-11-23  
+**Focus:** Core systems fixes and feature expansion  
+**Branch:** `claude/fix-expand-reincarnos-01BovNuYGsCDfV1o4KfATGPv`
+
+### Fixed Core Systems
+
+#### 1. Prestige System (System Sigils) ✅
+**Problem:** Prestige was creating brand new heroes instead of keeping existing roster.
+
+**Solution:**
+- Modified `performPrestige()` in `enhancedGameState.js` (lines 514-537)
+- Heroes now persist through prestige but reset to level 1
+- Equipment cleared, stats recalculated
+- Skill points and unlocked nodes reset
+- Hero `templateId`, `rarity`, and `name` preserved
+
+**Updated Files:**
+- `src/state/enhancedGameState.js` - Added hero reset loop in prestige
+- `src/os/apps/systemSigils.js` - Updated to use `enhancedGameState` instead of `gameState`
+- Fixed prestige UI to reflect "heroes kept, reset to level 1" behavior
+
+**Result:** Players now keep their summoned heroes through prestige, maintaining roster investment while resetting power level appropriately.
+
+---
+
+#### 2. Skill Points on Level-Up ✅
+**Status:** Already working correctly
+
+**Verification:**
+- Checked `addXpToHero()` in `heroSystem.js` (line 369)
+- Confirms `grantSkillPoints(hero, 1)` called on each level-up
+- Heroes created with `skillPoints = Math.max(0, level - 1)` for initial levels
+- Console logging confirms skill point grants
+
+**Result:** No fix needed - skill system functioning as designed.
+
+---
+
+#### 3. Dungeon Running Indicators ✅
+**Problem:** No clear visual indication that dungeon was actively running.
+
+**Solution:**
+- Added prominent "RUNNING" badge to Quest Explorer controls (`questExplorer.js:22-25`)
+- Badge displays when `gameState.dungeonState.running === true`
+- Updated button styling with state-based classes (primary/warning)
+- Enhanced progress text to show percentage when running
+
+**UI Changes:**
+- New badge element: `<div id="qe-running-badge" class="running-badge">`
+- Visual: Play icon (▶) + "RUNNING" text
+- Display: Flex layout, toggles visibility based on running state
+- Button feedback: "Pause Dungeon" vs "Start Dungeon" text
+
+**Result:** Players now have clear visual feedback when dungeons are actively running.
+
+---
+
+### New Features Implemented
+
+#### 4. E-Buy Resource Exchange App ✅
+**Purpose:** Trade gold for essential crafting resources with daily limits
+
+**Implementation:**
+- Created new app: `src/os/apps/eBuy.js`
+- Registered in `mainEnhanced.js` with resource manager integration
+
+**Features:**
+- **Exchange Rates:**
+  - 100 gold → 10 Code Fragments (limit: 10/day)
+  - 200 gold → 5 Memory Blocks (limit: 5/day)
+  - 150 gold → 50 CPU Cycles (limit: 20/day)
+  - 500 gold → 2 Entropy Dust (limit: 3/day)
+
+- **Daily Limit System:**
+  - Tracks purchases in `gameState.eBuyState.dailyPurchases`
+  - Automatic reset after 24 hours
+  - Shows "X / Y remaining" for each resource
+  - Countdown timer to next reset
+
+- **UI/UX:**
+  - Color-coded resource cards
+  - Purchase buttons disabled when limits reached or insufficient gold
+  - Clear feedback messages on purchase
+  - Auto-refresh every 5 seconds
+
+**State Management:**
+```javascript
+gameState.eBuyState = {
+  lastReset: Date.now(),
+  dailyPurchases: {
+    codeFragments: 0,
+    memoryBlocks: 0,
+    cpuCycles: 0,
+    entropyDust: 0
+  }
+}
+```
+
+**Result:** Players now have a controlled way to convert excess gold into crafting resources, preventing resource bottlenecks while maintaining economic balance.
+
+---
+
+### Summary of Changes
+
+**Files Modified:**
+1. `src/state/enhancedGameState.js` - Prestige hero reset logic
+2. `src/os/apps/systemSigils.js` - Updated imports and prestige handling
+3. `src/os/apps/questExplorer.js` - Added running indicator badge
+4. `src/mainEnhanced.js` - Registered E-Buy app
+
+**Files Created:**
+1. `src/os/apps/eBuy.js` - New resource exchange app
+
+**Systems Fixed:**
+- ✅ Prestige hero persistence
+- ✅ Skill points verified working
+- ✅ Dungeon running indicators
+
+**Systems Added:**
+- ✅ E-Buy resource exchange
+- ✅ Daily purchase limit tracking
+
+**Features Still Pending:**
+- ⏳ Enhanced Task Scheduler quest system
+- ⏳ Equipment slot mapping fixes (if needed)
+- ⏳ Tamagotchi/pet system
+- ⏳ Fake website browser app
+- ⏳ Resource tracker in Start menu
+
+---
+
+### Testing Notes
+
+**Build Status:** Dev server running successfully on `http://localhost:5173/`
+
+**Manual Testing Needed:**
+1. Prestige with existing heroes - verify they reset to level 1 with equipment cleared
+2. Level up heroes - confirm skill points granted
+3. Start/stop dungeons - verify RUNNING badge appears/disappears
+4. E-Buy purchases - test daily limits and gold deduction
+5. Daily reset - confirm E-Buy limits reset after 24 hours
+
+**Known Issues:**
+- None currently blocking gameplay
+
+---
+
+### Next Steps
+
+**Recommended Priority:**
+1. Add CSS styling for running badge (`.running-badge` class)
+2. Test E-Buy integration with resource manager
+3. Consider adding quest-like milestones to Task Scheduler
+4. Implement equipment slot validation if errors occur
+5. Add Start menu resource tracker widget
+
+**Low Priority / Nice-to-Have:**
+- Tamagotchi pet system
+- Fake website browser
+- Enhanced quest narrative system
+
+---
+

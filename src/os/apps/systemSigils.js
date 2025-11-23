@@ -1,8 +1,7 @@
 // ===== System Sigils App =====
 // Prestige system for meta progression
 
-import { gameState, resetGame, saveGame } from '../../state/gameState.js';
-import { CONFIG } from '../../state/config.js';
+import { gameState, performPrestige, calculatePrestigeRewards, canPrestige, saveGame } from '../../state/enhancedGameState.js';
 
 export const systemSigilsApp = {
   id: 'systemSigils',
@@ -14,12 +13,14 @@ export const systemSigilsApp = {
 };
 
 function render(rootEl) {
-  const sigilsToGain = CONFIG.sigilPowerFormula(gameState.lifetimeGold);
-  const currentBonus = gameState.sigilPoints * CONFIG.sigilBonusPerPoint;
-  const futureBonus = (gameState.sigilPoints + sigilsToGain) * CONFIG.sigilBonusPerPoint;
+  const rewards = calculatePrestigeRewards();
+  const sigilsToGain = rewards.sigilPoints;
+  const currentSigils = gameState.prestigeState.sigilPoints;
+  const bonusPerPoint = 0.02; // 2% per sigil point
+  const currentBonus = currentSigils * bonusPerPoint;
+  const futureBonus = (currentSigils + sigilsToGain) * bonusPerPoint;
 
   // Calculate progress to next sigil
-  const currentSigils = CONFIG.sigilPowerFormula(gameState.lifetimeGold);
   const nextSigilGold = Math.pow(currentSigils + 1, 2) * 1000;
   const progressToNext = gameState.lifetimeGold / nextSigilGold;
   const goldNeeded = Math.max(0, nextSigilGold - gameState.lifetimeGold);
@@ -40,7 +41,7 @@ function render(rootEl) {
         <div class="sigils-info">
           <div class="info-section">
             <div class="info-label">Current Sigil Points:</div>
-            <div class="info-value sigil-current">${gameState.sigilPoints}</div>
+            <div class="info-value sigil-current">${currentSigils}</div>
           </div>
           <div class="info-section">
             <div class="info-label">Current Bonus:</div>
@@ -52,7 +53,7 @@ function render(rootEl) {
           </div>
           <div class="info-section">
             <div class="info-label">Total Prestiges:</div>
-            <div class="info-value">${gameState.totalPrestiges}</div>
+            <div class="info-value">${gameState.prestigeState.totalPrestiges}</div>
           </div>
         </div>
 
@@ -75,7 +76,7 @@ function render(rootEl) {
           <h3 class="prestige-title">Reset & Gain Power</h3>
           <p class="prestige-description">
             Resetting will return you to Wave 1, but you'll gain permanent Sigil Points
-            that boost all your stats forever. All progress except Sigils and stats will be lost.
+            that boost all your stats forever. Your heroes will be kept but reset to level 1. All items and other progress will be lost.
           </p>
 
           <div class="prestige-preview">
@@ -85,7 +86,7 @@ function render(rootEl) {
             </div>
             <div class="preview-item">
               <span class="preview-label">Total after reset:</span>
-              <span class="preview-value">${gameState.sigilPoints + sigilsToGain}</span>
+              <span class="preview-value">${currentSigils + sigilsToGain}</span>
             </div>
             <div class="preview-item">
               <span class="preview-label">New bonus:</span>
@@ -170,7 +171,8 @@ function render(rootEl) {
 }
 
 function handlePrestige(rootEl) {
-  const sigilsToGain = CONFIG.sigilPowerFormula(gameState.lifetimeGold);
+  const rewards = calculatePrestigeRewards();
+  const sigilsToGain = rewards.sigilPoints;
 
   if (sigilsToGain === 0) {
     alert('You need more lifetime gold to prestige!');
@@ -180,14 +182,19 @@ function handlePrestige(rootEl) {
   const confirmed = confirm(
     `Are you sure you want to prestige?\n\n` +
     `You will gain ${sigilsToGain} Sigil Point${sigilsToGain !== 1 ? 's' : ''}.\n` +
-    `This will reset your progress to Wave 1 and clear most stats.\n` +
-    `Sigil Points provide permanent +${CONFIG.sigilBonusPerPoint * 100}% per point to all stats.\n\n` +
+    `Your heroes will be kept but reset to level 1.\n` +
+    `Your inventory and most progress will be cleared.\n` +
+    `Sigil Points provide permanent +2% per point to all stats.\n\n` +
     `This action cannot be undone!`
   );
 
   if (confirmed) {
-    resetGame();
-    alert(`Prestige complete! You gained ${sigilsToGain} Sigil Point${sigilsToGain !== 1 ? 's' : ''}!`);
-    render(rootEl);
+    const result = performPrestige();
+    if (result.success) {
+      alert(`Prestige complete! You gained ${sigilsToGain} Sigil Point${sigilsToGain !== 1 ? 's' : ''}!\n\nYour heroes have been reset to level 1 but remain in your roster.`);
+      render(rootEl);
+    } else {
+      alert(`Prestige failed: ${result.error}`);
+    }
   }
 }
