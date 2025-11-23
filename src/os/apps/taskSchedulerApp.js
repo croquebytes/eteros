@@ -30,25 +30,34 @@ function render(rootEl) {
   const activeTasks = gameState.activeTasks || [];
 
   rootEl.innerHTML = `
-    <div class="window-content task-scheduler">
-      <div class="task-queue">
-        <h2 class="window-subtitle">Active Tasks (${activeTasks.length})</h2>
-        <div class="task-list" id="active-task-list">
-          ${activeTasks.length === 0 ?
-            '<div class="task-empty">No active tasks. Start one from the templates below!</div>' :
-            activeTasks.map(task => renderTaskCard(task)).join('')
-          }
+    <div class="window-content task-scheduler-enhanced">
+      <div class="task-scheduler-layout">
+        <!-- Active Tasks Panel (Left 35%) -->
+        <div class="task-queue-panel">
+          <div class="panel-header">
+            <h2 class="window-subtitle">⏱️ Active Tasks</h2>
+            <span class="task-count-badge">${activeTasks.length}</span>
+          </div>
+          <div class="task-list" id="active-task-list">
+            ${activeTasks.length === 0 ?
+              '<div class="task-empty"><div class="empty-icon">📋</div><p>No active tasks</p><p class="small-text">Select a template to start</p></div>' :
+              activeTasks.map(task => renderTaskCard(task)).join('')
+            }
+          </div>
         </div>
-      </div>
 
-      <div class="task-templates">
-        <h2 class="window-subtitle">Available Tasks</h2>
-        <div class="template-tabs">
-          <button class="template-tab active" data-tab="research">🔬 Research</button>
-          <button class="template-tab" data-tab="compilation">⚙️ Compilation</button>
-          <button class="template-tab" data-tab="defrag">💾 Defragmentation</button>
+        <!-- Available Templates Panel (Right 65%) -->
+        <div class="task-templates-panel">
+          <div class="panel-header">
+            <h2 class="window-subtitle">📚 Task Templates</h2>
+          </div>
+          <div class="template-tabs">
+            <button class="template-tab active" data-tab="research">🔬 Research</button>
+            <button class="template-tab" data-tab="compilation">⚙️ Compilation</button>
+            <button class="template-tab" data-tab="defrag">💾 Defrag</button>
+          </div>
+          <div class="template-list" id="template-list"></div>
         </div>
-        <div class="template-list" id="template-list"></div>
       </div>
     </div>
   `;
@@ -81,83 +90,37 @@ function renderTaskCard(task) {
   const progress = Math.floor(task.progress * 100);
   const remaining = Math.max(0, task.completionTime - Date.now());
   const remainingStr = formatDuration(remaining);
-  const totalDuration = task.completionTime - task.startTime;
-  const elapsed = Date.now() - task.startTime;
-
-  // Calculate circular progress (SVG)
-  const circumference = 2 * Math.PI * 45; // radius = 45
-  const dashOffset = circumference - (progress / 100) * circumference;
 
   // Get color based on task type
   const typeColor = getTypeColor(task.type);
 
   return `
-    <div class="task-card ${progress >= 100 ? 'task-card--completing' : ''}" data-task-id="${task.id}">
-      <div class="task-card-layout">
-        <!-- Circular Timer -->
-        <div class="task-timer-circle">
-          <svg width="100" height="100" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.1)"
-              stroke-width="6"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="${typeColor}"
-              stroke-width="6"
-              stroke-dasharray="${circumference}"
-              stroke-dashoffset="${dashOffset}"
-              stroke-linecap="round"
-              transform="rotate(-90 50 50)"
-              class="task-timer-progress"
-            />
-          </svg>
-          <div class="task-timer-text">
-            <div class="task-timer-percent">${progress}%</div>
-            <div class="task-timer-icon">${getTypeIcon(task.type)}</div>
-          </div>
+    <div class="task-card-compact ${progress >= 100 ? 'task-card--completing' : ''}" data-task-id="${task.id}">
+      <div class="task-card-header-compact">
+        <div class="task-icon-badge" style="background: ${typeColor}33; border-color: ${typeColor};">
+          ${getTypeIcon(task.type)}
         </div>
-
-        <!-- Task Info -->
-        <div class="task-card-info">
-          <div class="task-card-header">
-            <span class="task-name">${task.name}</span>
-            <button class="btn btn-ghost btn-sm" data-task-id="${task.id}" title="Cancel task">✕</button>
-          </div>
-
-          <div class="task-progress-section">
-            <div class="task-progress-bar-bg">
-              <div
-                class="task-progress-bar-fill"
-                style="width: ${progress}%; background: linear-gradient(90deg, ${typeColor}80, ${typeColor})"
-              ></div>
-            </div>
-            <div class="task-progress-details">
-              <span class="task-remaining">⏱️ ${remainingStr} remaining</span>
-              <span class="task-elapsed">Elapsed: ${formatDuration(elapsed)}</span>
-            </div>
-          </div>
-
-          ${task.reward ? `
-            <div class="task-rewards-preview">
-              <strong>On Completion:</strong>
-              ${Object.entries(task.reward).map(([res, amt]) => `
-                <span class="reward-badge">
-                  <span style="color: ${RESOURCE_INFO[res]?.color || '#fff'}">${RESOURCE_INFO[res]?.icon || '?'}</span>
-                  +${amt}
-                </span>
-              `).join(' ')}
-            </div>
-          ` : ''}
+        <div class="task-info-compact">
+          <div class="task-name-compact">${task.name}</div>
+          <div class="task-time-compact">⏱️ ${remainingStr}</div>
         </div>
+        <button class="btn-cancel-task" data-task-id="${task.id}" title="Cancel task">✕</button>
       </div>
+
+      <div class="task-progress-bar-compact">
+        <div class="task-progress-fill-compact" style="width: ${progress}%; background: ${typeColor};"></div>
+        <span class="task-progress-label">${progress}%</span>
+      </div>
+
+      ${task.reward && Object.keys(task.reward).length > 0 ? `
+        <div class="task-rewards-compact">
+          ${Object.entries(task.reward).map(([res, amt]) => `
+            <span class="reward-badge-compact" style="color: ${RESOURCE_INFO[res]?.color || '#60a5fa'}">
+              ${RESOURCE_INFO[res]?.icon || '?'} +${amt}
+            </span>
+          `).join('')}
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -175,36 +138,52 @@ function renderTemplates(rootEl, category) {
     return;
   }
 
-  templateList.innerHTML = templates.map(tmpl => `
-    <div class="template-card">
-      <div class="template-header">
-        <span class="template-type-icon">${getTypeIcon(tmpl.type)}</span>
-        <span class="template-name">${tmpl.name}</span>
-      </div>
-      <div class="template-duration">⏱️ ${formatDuration(tmpl.duration)}</div>
-      <div class="template-cost">
-        <strong>Cost:</strong>
-        ${Object.entries(tmpl.cost).map(([res, amt]) => `
-          <span class="cost-item">
-            <span style="color: ${RESOURCE_INFO[res]?.color || '#fff'}">${RESOURCE_INFO[res]?.icon || '?'}</span>
-            ${amt}
-          </span>
-        `).join(' ')}
-      </div>
-      ${Object.keys(tmpl.reward || {}).length > 0 ? `
-        <div class="template-reward">
-          <strong>Reward:</strong>
-          ${Object.entries(tmpl.reward).map(([res, amt]) => `
-            <span class="reward-item">
-              <span style="color: ${RESOURCE_INFO[res]?.color || '#fff'}">${RESOURCE_INFO[res]?.icon || '?'}</span>
-              ${amt}
-            </span>
-          `).join(' ')}
+  templateList.innerHTML = templates.map(tmpl => {
+    const typeColor = getTypeColor(tmpl.type);
+    return `
+      <div class="template-card-grid">
+        <div class="template-header-grid">
+          <div class="template-icon-large" style="background: ${typeColor}22; border-color: ${typeColor};">
+            ${getTypeIcon(tmpl.type)}
+          </div>
+          <div class="template-info-grid">
+            <div class="template-name-grid">${tmpl.name}</div>
+            <div class="template-duration-grid">⏱️ ${formatDuration(tmpl.duration)}</div>
+          </div>
         </div>
-      ` : ''}
-      <button class="btn btn-primary btn-sm btn-block" data-template="${tmpl.key}">Start Task</button>
-    </div>
-  `).join('');
+
+        <div class="template-resources-grid">
+          <div class="resource-section">
+            <span class="resource-label">Cost:</span>
+            <div class="resource-items">
+              ${Object.entries(tmpl.cost).map(([res, amt]) => `
+                <span class="resource-badge" style="color: ${RESOURCE_INFO[res]?.color || '#93c5fd'}">
+                  ${RESOURCE_INFO[res]?.icon || '?'} ${amt}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          ${Object.keys(tmpl.reward || {}).length > 0 ? `
+            <div class="resource-section">
+              <span class="resource-label">Reward:</span>
+              <div class="resource-items">
+                ${Object.entries(tmpl.reward).map(([res, amt]) => `
+                  <span class="resource-badge" style="color: ${RESOURCE_INFO[res]?.color || '#10b981'}">
+                    ${RESOURCE_INFO[res]?.icon || '?'} +${amt}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <button class="btn btn-primary btn-sm btn-block btn-start-task" data-template="${tmpl.key}">
+          Start Task
+        </button>
+      </div>
+    `;
+  }).join('');
 
   // Add start task handlers
   templateList.querySelectorAll('.btn-start-task').forEach(btn => {

@@ -56,9 +56,9 @@ export function createStartMenu() {
   const actionsContainer = startMenuEl.querySelector('#start-menu-actions');
   const quickActions = [
     { label: 'Quest Explorer', appId: 'questExplorer', icon: '⚔' },
+    { label: 'Resource Tracker', appId: 'resourceTracker', icon: '📊' },
     { label: 'Loot Downloads', appId: 'lootDownloads', icon: '📦' },
-    { label: 'Soulware Store', appId: 'soulwareStore', icon: '🛒' },
-    { label: 'System Sigils', appId: 'systemSigils', icon: '🔮' }
+    { label: 'Soulware Store', appId: 'soulwareStore', icon: '🛒' }
   ];
 
   quickActions.forEach(action => {
@@ -96,29 +96,44 @@ function updateProgress() {
   if (!progressContainer) return;
 
   const stats = getDungeonStats();
+  const resourceManager = window.resourceManager;
+
+  // Get resource amounts
+  const codeFragments = resourceManager ? Math.floor(resourceManager.getResourceAmount('codeFragments')) : (gameState.codeFragments || 0);
+  const memoryBlocks = resourceManager ? Math.floor(resourceManager.getResourceAmount('memoryBlocks')) : (gameState.memoryBlocks || 0);
+  const cpuCycles = resourceManager ? Math.floor(resourceManager.getResourceAmount('cpuCycles')) : (gameState.cpuCycles || 0);
 
   progressContainer.innerHTML = `
     <div class="start-menu-stat">
-      <span class="start-menu-stat-label">Wave</span>
-      <span class="start-menu-stat-value">${stats.wave}</span>
+      <span class="start-menu-stat-label">💰 Gold</span>
+      <span class="start-menu-stat-value">${formatNumber(Math.floor(stats.gold))}</span>
     </div>
     <div class="start-menu-stat">
-      <span class="start-menu-stat-label">Gold</span>
-      <span class="start-menu-stat-value">${Math.floor(stats.gold)}</span>
+      <span class="start-menu-stat-label">📜 Fragments</span>
+      <span class="start-menu-stat-value">${formatNumber(codeFragments)}</span>
     </div>
     <div class="start-menu-stat">
-      <span class="start-menu-stat-label">XP</span>
-      <span class="start-menu-stat-value">${Math.floor(stats.xp)}</span>
+      <span class="start-menu-stat-label">🧱 Memory</span>
+      <span class="start-menu-stat-value">${formatNumber(memoryBlocks)}</span>
     </div>
     <div class="start-menu-stat">
-      <span class="start-menu-stat-label">Enemies</span>
-      <span class="start-menu-stat-value">${stats.enemyCount}${stats.isBossWave ? ' (BOSS)' : ''}</span>
+      <span class="start-menu-stat-label">⚡ CPU</span>
+      <span class="start-menu-stat-value">${formatNumber(cpuCycles)}</span>
     </div>
-    <div class="start-menu-stat">
+    <div class="start-menu-stat start-menu-stat-wide">
       <span class="start-menu-stat-label">Status</span>
-      <span class="start-menu-stat-value">${stats.running ? '⚔ Exploring' : '💤 Idle'}</span>
+      <span class="start-menu-stat-value">${stats.running ? `⚔ Wave ${stats.wave}` : '💤 Idle'}</span>
     </div>
   `;
+}
+
+function formatNumber(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return Math.floor(num).toString();
 }
 
 /**

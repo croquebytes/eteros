@@ -13,6 +13,7 @@ import {
   findNearestUnoccupiedCell,
   updateMobileMode
 } from './desktopState.js';
+import { getDungeonStats } from '../state/dungeonRunner.js';
 
 const APPS = [
   { id: 'questExplorer', label: 'Quest Explorer' },
@@ -30,6 +31,7 @@ const APPS = [
   { id: 'firewallDefense', label: 'Firewall Defense' },
   { id: 'cosmeticTerminal', label: 'Aesthetic Terminal' },
   { id: 'systemMonitor', label: 'System Monitor' },
+  { id: 'resourceTracker', label: 'Resource Tracker' },
   { id: 'settings', label: 'Settings' },
 ];
 
@@ -403,6 +405,24 @@ function updateTaskbarButtons() {
     btn.classList.toggle('taskbar-button--running', true);
     btn.classList.toggle('taskbar-button--minimized', isMinimized);
     btn.classList.toggle('taskbar-button--active', isActive && !isMinimized);
+
+    // Add dungeon running badge to Quest Explorer
+    if (appId === 'questExplorer') {
+      const dungeonStats = getDungeonStats();
+      let badge = btn.querySelector('.taskbar-badge');
+
+      if (dungeonStats.running) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'taskbar-badge';
+          btn.appendChild(badge);
+        }
+        badge.textContent = `⚔${dungeonStats.wave}`;
+        badge.title = `Dungeon running - Wave ${dungeonStats.wave}`;
+      } else if (badge) {
+        badge.remove();
+      }
+    }
   });
 }
 

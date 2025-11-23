@@ -28,7 +28,7 @@ export function getSnapZone(x, y, snapMode = 'quarters') {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const taskbarHeight = 40; // Height of taskbar at bottom
-  const snapMargin = 50; // Distance from edge to trigger snap
+  const snapMargin = 75; // Distance from edge to trigger snap (increased for easier triggering)
 
   // Calculate zones
   const leftZone = x < snapMargin;

@@ -26,6 +26,7 @@ import { firewallDefense } from './os/apps/firewallDefense.js';
 import { cosmeticTerminal } from './os/apps/cosmeticTerminal.js';
 // NEW APPS (Phase 3)
 import { systemMonitor } from './os/apps/systemMonitor.js';
+import { resourceTrackerApp } from './os/apps/resourceTracker.js';
 
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
@@ -54,6 +55,10 @@ windowManager.init(windowLayerEl);
 // Initialize new game systems
 const resourceManager = new ResourceManager();
 const taskScheduler = new TaskScheduler(resourceManager);
+
+// Make resource manager available globally for Resource Tracker app
+window.resourceManager = resourceManager;
+window.taskScheduler = taskScheduler;
 
 // Set resource manager for apps that need it
 skillTreeApp.setResourceManager(resourceManager);
@@ -95,6 +100,7 @@ windowManager.registerApp(firewallDefense);
 windowManager.registerApp(cosmeticTerminal);
 // NEW APPS (Phase 3)
 windowManager.registerApp(systemMonitor);
+windowManager.registerApp(resourceTrackerApp);
 
 // Start game systems
 startCombatLoop();

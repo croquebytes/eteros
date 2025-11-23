@@ -895,42 +895,51 @@ body {
 }
 
 .desktop-icon {
-  width: 90px;
-  padding: 6px;
-  border-radius: 6px;
+  width: 96px;
+  padding: 8px;
+  border-radius: 8px;
   text-align: center;
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .desktop-icon:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .desktop-icon-glyph {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 6px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 20px;
-  background: rgba(0, 0, 0, 0.3);
+  font-size: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.desktop-icon:hover .desktop-icon-glyph {
+  border-color: rgba(96, 165, 250, 0.6);
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
 }
 
 .desktop-icon-label {
-  font-size: 11px;
-  text-shadow: 0 1px 1px #000;
-  line-height: 1.3;
+  font-size: 12px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 4px rgba(0, 0, 0, 0.6);
+  line-height: 1.4;
   word-wrap: break-word;
-  max-height: 32px;
+  max-height: 38px;
   overflow: hidden;
+  font-weight: 500;
 }
 
 /* ===== Window Layer ===== */
@@ -1094,6 +1103,39 @@ body {
   border-color: rgba(59, 130, 246, 0.4);
   color: #f5f5f5;
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Taskbar badge (dungeon running indicator) */
+.taskbar-button {
+  position: relative;
+}
+
+.taskbar-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 2px solid #050815;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6);
+  animation: badgePulse 2s ease-in-out infinite;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.8);
+  }
 }
 
 .taskbar-tray {
@@ -5212,13 +5254,45 @@ body.compact-mode .enemy-card {
 /* Snap Preview Overlay */
 .snap-preview {
   position: fixed;
-  background: rgba(41, 140, 255, 0.2);
-  border: 2px solid rgba(41, 140, 255, 0.6);
-  border-radius: 4px;
+  background: rgba(41, 140, 255, 0.15);
+  border: 3px solid rgba(41, 140, 255, 0.7);
+  border-radius: 6px;
   pointer-events: none;
   z-index: 9998;
-  transition: all 0.15s ease-out;
-  backdrop-filter: blur(2px);
+  transition: all 0.2s ease-out;
+  backdrop-filter: blur(3px);
+  animation: snapPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes snapPulse {
+  0%, 100% {
+    border-color: rgba(41, 140, 255, 0.7);
+    box-shadow: 0 0 20px rgba(41, 140, 255, 0.3);
+  }
+  50% {
+    border-color: rgba(41, 140, 255, 0.9);
+    box-shadow: 0 0 30px rgba(41, 140, 255, 0.5);
+  }
+}
+
+/* Color-coded snap types */
+.snap-preview[data-snap-id="left"],
+.snap-preview[data-snap-id="right"] {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.7);
+}
+
+.snap-preview[data-snap-id="top-left"],
+.snap-preview[data-snap-id="top-right"],
+.snap-preview[data-snap-id="bottom-left"],
+.snap-preview[data-snap-id="bottom-right"] {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.7);
+}
+
+.snap-preview[data-snap-id="maximize"] {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.7);
 }
 
 /* Window Dragging State */
@@ -5788,20 +5862,50 @@ body.compact-mode .enemy-card {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Snap position labels (optional) */
+/* Snap position labels */
 .snap-preview::before {
   content: attr(data-snap-label);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
-  color: rgba(41, 140, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   pointer-events: none;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(41, 140, 255, 0.6);
+  animation: labelPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes labelPulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Label colors for different snap types */
+.snap-preview[data-snap-id="left"]::before,
+.snap-preview[data-snap-id="right"]::before {
+  color: rgba(96, 165, 250, 1);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(96, 165, 250, 0.8);
+}
+
+.snap-preview[data-snap-id="top-left"]::before,
+.snap-preview[data-snap-id="top-right"]::before,
+.snap-preview[data-snap-id="bottom-left"]::before,
+.snap-preview[data-snap-id="bottom-right"]::before {
+  color: rgba(168, 85, 247, 1);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(168, 85, 247, 0.8);
+}
+
+.snap-preview[data-snap-id="maximize"]::before {
+  color: rgba(245, 158, 11, 1);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.8);
 }
 
 /* ===== Phase 2: Enhanced Focus States ===== */
@@ -6368,6 +6472,346 @@ body.compact-mode .enemy-card {
   }
 }
 
+/* ===== Enhanced Task Scheduler Layout (Side-by-Side) ===== */
+
+.task-scheduler-enhanced {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-scheduler-layout {
+  display: grid;
+  grid-template-columns: 35% 65%;
+  gap: 16px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Panel styling */
+.task-queue-panel,
+.task-templates-panel {
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 22, 33, 0.4);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  background: rgba(34, 51, 85, 0.6);
+  border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.task-count-badge {
+  background: rgba(96, 165, 250, 0.2);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+/* Task list scrollable area */
+.task-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* Empty state */
+.task-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(245, 245, 245, 0.5);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Compact task cards */
+.task-card-compact {
+  background: linear-gradient(135deg, rgba(27, 41, 67, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+  border: 2px solid rgba(96, 165, 250, 0.3);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: all 0.25s ease;
+}
+
+.task-card-compact:hover {
+  transform: translateX(4px);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.task-card-header-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.task-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.task-info-compact {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-name-compact {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f5f5;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-time-compact {
+  font-size: 12px;
+  color: rgba(96, 165, 250, 0.9);
+}
+
+.task-card-header-compact .btn-cancel-task {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.task-card-header-compact .btn-cancel-task:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* Progress bar compact */
+.task-progress-bar-compact {
+  position: relative;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.task-progress-fill-compact {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.task-progress-label {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Rewards compact */
+.task-rewards-compact {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.reward-badge-compact {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Template tabs */
+.template-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(15, 22, 33, 0.6);
+  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  flex-shrink: 0;
+}
+
+.template-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(27, 41, 67, 0.4);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 6px;
+  color: rgba(245, 245, 245, 0.7);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-tab:hover {
+  background: rgba(27, 41, 67, 0.6);
+  border-color: rgba(96, 165, 250, 0.4);
+  color: #f5f5f5;
+}
+
+.template-tab.active {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+/* Template list grid */
+.template-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.template-card-grid {
+  background: linear-gradient(135deg, rgba(27, 41, 67, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border: 2px solid rgba(96, 165, 250, 0.25);
+  border-radius: 10px;
+  padding: 14px;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.template-card-grid:hover {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.template-header-grid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.template-icon-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.template-info-grid {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-name-grid {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f5f5f5;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.template-duration-grid {
+  font-size: 12px;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+/* Resources section */
+.template-resources-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resource-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.resource-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 245, 0.7);
+  min-width: 50px;
+}
+
+.resource-items {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.resource-badge {
+  font-size: 12px;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .task-scheduler-layout {
+    grid-template-columns: 40% 60%;
+  }
+
+  .template-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .task-scheduler-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 300px 1fr;
+  }
+}
+
 /* ===== End Phase 3: Enhanced Task Scheduler UI ===== */
 
 /* ===== End Phase 2 Settings Enhancements ===== */
@@ -6892,3 +7336,159 @@ body.compact-mode .enemy-card {
   border-top: 1px solid var(--border-default);
   max-width: 200px;
 }
+
+
+/* ===== Resource Tracker App ===== */
+
+.resource-tracker-app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px;
+  gap: 24px;
+}
+
+.resource-tracker-header {
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+}
+
+.resource-tracker-subtitle {
+  font-size: 14px;
+  color: rgba(245, 245, 245, 0.6);
+  margin-top: 8px;
+}
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.resource-card {
+  background: linear-gradient(135deg, rgba(27, 41, 67, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.resource-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.resource-icon {
+  font-size: 32px;
+}
+
+.resource-info {
+  flex: 1;
+}
+
+.resource-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f5f5f5;
+  margin-bottom: 4px;
+}
+
+.resource-description {
+  font-size: 12px;
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.resource-amount {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 12px 0;
+}
+
+.resource-capacity {
+  font-size: 18px;
+  color: rgba(245, 245, 245, 0.5);
+  font-weight: 400;
+}
+
+.resource-capacity-bar {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.resource-capacity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+.resource-rate {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.resource-stats-panel {
+  background: rgba(15, 22, 33, 0.4);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.stat-item {
+  background: rgba(27, 41, 67, 0.4);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: rgba(245, 245, 245, 0.7);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+/* Start menu stat wide variant */
+.start-menu-stat-wide {
+  grid-column: 1 / -1;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ===== End Resource Tracker App ===== */
+
