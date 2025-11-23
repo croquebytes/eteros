@@ -2,6 +2,7 @@
 
 import { windowManager } from './windowManager.js';
 import { createBattleTracker } from './battleTrackerWidget.js';
+import { createStartButton, createStartMenu } from './startMenu.js';
 import {
   getDesktopState,
   updateIconPosition,
@@ -144,9 +145,16 @@ export function createDesktop() {
   const taskbar = createTaskbar();
   desktopEl.appendChild(taskbar);
 
+  // Add start menu
+  const startMenu = createStartMenu();
+  desktopEl.appendChild(startMenu);
+
   // Add battle tracker widget
   const battleTracker = createBattleTracker();
   desktopEl.appendChild(battleTracker);
+
+  // Add desktop context menu handlers
+  setupDesktopContextMenu(wallpaper, iconsContainer);
 
   // Optional: Add grid overlay for debug
   const settings = getSettings();
@@ -312,6 +320,10 @@ function makeIconDraggable(iconEl, iconId) {
 function createTaskbar() {
   const taskbar = document.createElement('div');
   taskbar.id = 'taskbar';
+
+  // Add start button
+  const startButton = createStartButton();
+  taskbar.appendChild(startButton);
 
   const running = document.createElement('div');
   running.className = 'taskbar-running';
@@ -511,4 +523,173 @@ function handleHomeButtonClick() {
   });
 
   console.log('All windows minimized');
+}
+
+// ===== Desktop Context Menu System =====
+
+const WALLPAPERS = [
+  'radial-gradient(circle at top left, #223355 0, #050815 55%, #02040a 100%)',
+  'radial-gradient(circle at center, #2e1065 0%, #050815 60%, #02040a 100%)',
+  'radial-gradient(circle at bottom right, #064e3b 0%, #050815 55%, #02040a 100%)',
+  'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%)'
+];
+
+let currentWallpaperIndex = 0;
+let contextMenuEl = null;
+
+/**
+ * Setup desktop context menu (right-click on wallpaper/desktop)
+ */
+function setupDesktopContextMenu(wallpaperEl, iconsContainer) {
+  // Prevent default context menu on wallpaper
+  wallpaperEl.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    showDesktopContextMenu(e.clientX, e.clientY);
+  });
+
+  // Also handle desktop area (not on icons)
+  iconsContainer.addEventListener('contextmenu', (e) => {
+    // Only show if clicking on empty space, not an icon
+    if (!e.target.closest('.desktop-icon')) {
+      e.preventDefault();
+      showDesktopContextMenu(e.clientX, e.clientY);
+    }
+  });
+
+  // Close context menu on any click
+  document.addEventListener('click', () => {
+    hideDesktopContextMenu();
+  });
+
+  // Close context menu on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideDesktopContextMenu();
+    }
+  });
+}
+
+/**
+ * Show desktop context menu at position
+ */
+function showDesktopContextMenu(x, y) {
+  // Hide any existing menu
+  hideDesktopContextMenu();
+
+  // Create context menu
+  contextMenuEl = document.createElement('div');
+  contextMenuEl.className = 'desktop-context-menu';
+  contextMenuEl.style.left = x + 'px';
+  contextMenuEl.style.top = y + 'px';
+
+  const menuItems = [
+    {
+      icon: '🎨',
+      label: 'Change Wallpaper',
+      action: changeWallpaper
+    },
+    {
+      icon: '🔄',
+      label: 'Arrange Icons',
+      action: arrangeIcons
+    },
+    { divider: true },
+    {
+      icon: '↻',
+      label: 'Refresh Desktop',
+      action: refreshDesktop
+    }
+  ];
+
+  menuItems.forEach(item => {
+    if (item.divider) {
+      const divider = document.createElement('div');
+      divider.className = 'desktop-context-menu-divider';
+      contextMenuEl.appendChild(divider);
+    } else {
+      const menuItem = document.createElement('div');
+      menuItem.className = 'desktop-context-menu-item';
+      menuItem.innerHTML = `
+        <span class="desktop-context-menu-item-icon">${item.icon}</span>
+        <span>${item.label}</span>
+      `;
+      menuItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        item.action();
+        hideDesktopContextMenu();
+      });
+      contextMenuEl.appendChild(menuItem);
+    }
+  });
+
+  document.body.appendChild(contextMenuEl);
+
+  // Adjust position if menu goes off screen
+  const rect = contextMenuEl.getBoundingClientRect();
+  if (rect.right > window.innerWidth) {
+    contextMenuEl.style.left = (x - rect.width) + 'px';
+  }
+  if (rect.bottom > window.innerHeight) {
+    contextMenuEl.style.top = (y - rect.height) + 'px';
+  }
+}
+
+/**
+ * Hide desktop context menu
+ */
+function hideDesktopContextMenu() {
+  if (contextMenuEl) {
+    contextMenuEl.remove();
+    contextMenuEl = null;
+  }
+}
+
+/**
+ * Change desktop wallpaper (cycle through wallpapers)
+ */
+function changeWallpaper() {
+  currentWallpaperIndex = (currentWallpaperIndex + 1) % WALLPAPERS.length;
+  const wallpaperEl = document.getElementById('desktop-wallpaper');
+  if (wallpaperEl) {
+    wallpaperEl.style.background = WALLPAPERS[currentWallpaperIndex];
+    console.log(`Changed wallpaper to ${currentWallpaperIndex + 1}/${WALLPAPERS.length}`);
+  }
+}
+
+/**
+ * Arrange icons in default grid layout
+ */
+function arrangeIcons() {
+  const gridSize = getGridSize();
+  const padding = 12;
+  const iconsPerColumn = 8;
+
+  const state = getDesktopState();
+  const icons = Object.values(state.icons);
+
+  icons.forEach((iconData, index) => {
+    const column = Math.floor(index / iconsPerColumn);
+    const row = index % iconsPerColumn;
+
+    const x = padding + (column * gridSize);
+    const y = padding + (row * gridSize);
+
+    updateIconPosition(iconData.id, x, y);
+
+    // Update DOM element position
+    const iconEl = document.querySelector(`[data-icon-id="${iconData.id}"]`);
+    if (iconEl) {
+      iconEl.style.left = x + 'px';
+      iconEl.style.top = y + 'px';
+    }
+  });
+
+  console.log('Icons arranged in grid layout');
+}
+
+/**
+ * Refresh desktop (reload icon positions from state)
+ */
+function refreshDesktop() {
+  location.reload();
 }

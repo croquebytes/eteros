@@ -546,6 +546,10 @@ body {
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 #desktop-wallpaper {
@@ -553,6 +557,9 @@ body {
   inset: 0;
   background: radial-gradient(circle at top left, #223355 0, #050815 55%, #02040a 100%);
   filter: saturate(1.2);
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
 }
 
 #desktop-icons {
@@ -561,7 +568,7 @@ body {
   left: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   z-index: 2;
 }
 
@@ -6173,6 +6180,227 @@ body.compact-mode .enemy-card {
     background: rgba(96, 165, 250, 0.2);
     transform: scale(0.95);
   }
+}
+
+/* ===== End Mobile Home Button & UI Enhancements ===== */
+
+/* ===== Desktop Context Menu ===== */
+.desktop-context-menu {
+  position: fixed;
+  background: rgba(5, 8, 21, 0.98);
+  border: 2px solid #223355;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 8px 0;
+  min-width: 200px;
+  z-index: 10000;
+  backdrop-filter: blur(10px);
+  user-select: none;
+  -webkit-user-select: none;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.desktop-context-menu-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #f5f5f5;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.15s ease-out;
+}
+
+.desktop-context-menu-item:hover {
+  background: rgba(41, 140, 255, 0.15);
+}
+
+.desktop-context-menu-item:active {
+  background: rgba(41, 140, 255, 0.25);
+}
+
+.desktop-context-menu-item-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.desktop-context-menu-divider {
+  height: 1px;
+  background: #223355;
+  margin: 4px 0;
+}
+
+/* Start Button and Menu */
+.start-button {
+  background: rgba(34, 51, 85, 0.8);
+  border: 2px solid #223355;
+  color: #f5f5f5;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease-out;
+  margin-right: 12px;
+}
+
+.start-button:hover {
+  background: rgba(41, 140, 255, 0.2);
+  border-color: rgba(41, 140, 255, 0.6);
+  box-shadow: 0 0 12px rgba(41, 140, 255, 0.3);
+}
+
+.start-button:active {
+  background: rgba(41, 140, 255, 0.3);
+  transform: scale(0.98);
+}
+
+.start-button.active {
+  background: rgba(41, 140, 255, 0.25);
+  border-color: rgba(41, 140, 255, 0.8);
+}
+
+.start-menu {
+  position: fixed;
+  bottom: 50px;
+  left: 10px;
+  width: 360px;
+  max-height: 520px;
+  background: rgba(5, 8, 21, 0.98);
+  border: 2px solid #223355;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(15px);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: startMenuSlideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes startMenuSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.start-menu.open {
+  display: flex;
+}
+
+.start-menu-header {
+  padding: 16px;
+  border-bottom: 2px solid #223355;
+  background: rgba(34, 51, 85, 0.3);
+}
+
+.start-menu-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #60a5fa;
+  margin-bottom: 4px;
+}
+
+.start-menu-subtitle {
+  font-size: 12px;
+  color: #93c5fd;
+  opacity: 0.8;
+}
+
+.start-menu-section {
+  padding: 12px;
+  border-bottom: 1px solid rgba(34, 51, 85, 0.5);
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.start-menu-section:last-child {
+  border-bottom: none;
+}
+
+.start-menu-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #93c5fd;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.start-menu-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.start-menu-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(34, 51, 85, 0.3);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.start-menu-stat-label {
+  color: #93c5fd;
+  font-weight: 500;
+}
+
+.start-menu-stat-value {
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.start-menu-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.start-menu-action-btn {
+  padding: 10px;
+  background: rgba(34, 51, 85, 0.5);
+  border: 1px solid #223355;
+  border-radius: 6px;
+  color: #f5f5f5;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  transition: all 0.15s ease-out;
+}
+
+.start-menu-action-btn:hover {
+  background: rgba(41, 140, 255, 0.2);
+  border-color: rgba(41, 140, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.start-menu-action-btn:active {
+  transform: translateY(0);
+  background: rgba(41, 140, 255, 0.3);
 }
 
 /* ===== End Mobile Home Button & UI Enhancements ===== */
