@@ -143,6 +143,14 @@ ReincarnOS is a browser-based OS-style idle RPG built with Vite + Vanilla JS. Th
 
 ---
 
+### Recent Shell Updates (Layout Polish)
+
+- Desktop icons now honor a 7-row-per-column grid with enforced snapping to aligned cells and desktop double-click-to-open to prevent accidental launches during drags.
+- Icon labels avoid mid-word breaks for cleaner readability across varying icon widths.
+- Window snap targets use evenly divided left/right halves and four equal quadrants for consistent splits.
+
+---
+
 ## Phase 2 – UI Polish & Feedback (PLANNED)
 
 **Status:** Not Started
