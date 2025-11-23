@@ -6,12 +6,11 @@ import {
   getDesktopState,
   updateIconPosition,
   getSettings,
-  getGridSize,
   getGridCell,
   getCellPosition,
-  isCellOccupied,
   findNearestUnoccupiedCell,
-  updateMobileMode
+  updateMobileMode,
+  MAX_ICON_ROWS
 } from './desktopState.js';
 import { getDungeonStats } from '../state/dungeonRunner.js';
 
@@ -48,8 +47,13 @@ export function createDesktop() {
   windowLayerEl.id = 'window-layer';
   desktopEl.appendChild(windowLayerEl);
 
+  const settings = getSettings();
+  const gridSize = settings.iconGridSize;
+
   const iconsContainer = document.createElement('div');
   iconsContainer.id = 'desktop-icons';
+  iconsContainer.style.setProperty('--desktop-icon-cell', `${gridSize}px`);
+  iconsContainer.style.setProperty('--desktop-icon-size', `${Math.max(64, gridSize - 12)}px`);
 
   // Load icon positions from state
   const state = getDesktopState();
@@ -64,27 +68,26 @@ export function createDesktop() {
     icon.dataset.iconId = iconId;
 
     // Always position icon - use state or calculate default grid position
-    if (iconState && iconState.x !== undefined && iconState.y !== undefined) {
-      // Use saved position
-      icon.style.left = iconState.x + 'px';
-      icon.style.top = iconState.y + 'px';
-    } else {
-      // Calculate default grid position for first load
-      const gridSize = getGridSize();
-      const padding = 12;
-      const iconsPerColumn = 8;
-      const index = APPS.findIndex(a => a.id === app.id);
-      const column = Math.floor(index / iconsPerColumn);
-      const row = index % iconsPerColumn;
-      const defaultX = padding + (column * gridSize);
-      const defaultY = padding + (row * gridSize);
+    const index = APPS.findIndex(a => a.id === app.id);
 
-      icon.style.left = defaultX + 'px';
-      icon.style.top = defaultY + 'px';
+    const assignedCell = (() => {
+      if (iconState && iconState.x !== undefined && iconState.y !== undefined) {
+        const savedCell = getGridCell(iconState.x, iconState.y, gridSize);
+        return findNearestUnoccupiedCell(savedCell.col, savedCell.row, iconId);
+      }
 
-      // Save this default position to state
-      updateIconPosition(iconId, defaultX, defaultY);
-    }
+      const column = Math.floor(index / MAX_ICON_ROWS);
+      const row = index % MAX_ICON_ROWS;
+      return findNearestUnoccupiedCell(column, row, iconId);
+    })();
+
+    const defaultPos = getCellPosition(assignedCell.col, assignedCell.row, gridSize);
+
+    icon.style.left = defaultPos.x + 'px';
+    icon.style.top = defaultPos.y + 'px';
+
+    // Save this position to state
+    updateIconPosition(iconId, defaultPos.x, defaultPos.y);
 
     const glyph = document.createElement('div');
     glyph.className = 'desktop-icon-glyph';
@@ -98,7 +101,6 @@ export function createDesktop() {
     icon.appendChild(label);
 
     // Mobile mode: single-tap, Desktop mode: double-click
-    const settings = getSettings();
     const isMobile = settings.isMobileMode;
 
     if (isMobile) {
@@ -131,6 +133,7 @@ export function createDesktop() {
     } else {
       // Desktop: double-click to open
       icon.addEventListener('dblclick', () => {
+        if (icon.dataset.justDragged === '1') return;
         windowManager.openWindow(app.id);
       });
     }
@@ -155,7 +158,6 @@ export function createDesktop() {
   setupDesktopContextMenu(wallpaper, iconsContainer);
 
   // Optional: Add grid overlay for debug
-  const settings = getSettings();
   if (settings.showGridOverlay) {
     const gridOverlay = createGridOverlay(settings.iconGridSize);
     desktopEl.appendChild(gridOverlay);
@@ -190,6 +192,7 @@ function makeIconDraggable(iconEl, iconId) {
   let isDragging = false;
   let dragOffsetX = 0; // Offset from cursor to icon top-left
   let dragOffsetY = 0;
+  let movedDuringDrag = false;
 
   function handleMouseDown(e) {
     // Only drag on single click, not double-click
@@ -212,6 +215,7 @@ function makeIconDraggable(iconEl, iconId) {
     dragOffsetY = clientY - rect.top;
 
     isDragging = true;
+    movedDuringDrag = false;
     iconEl.classList.add('desktop-icon--dragging');
     iconEl.style.userSelect = 'none';
 
@@ -255,6 +259,7 @@ function makeIconDraggable(iconEl, iconId) {
 
     iconEl.style.left = newX + 'px';
     iconEl.style.top = newY + 'px';
+    movedDuringDrag = true;
   }
 
   function handleMouseUp(e) {
@@ -299,6 +304,13 @@ function makeIconDraggable(iconEl, iconId) {
     updateIconPosition(iconId, finalPos.x, finalPos.y);
 
     console.log(`Icon ${iconId} moved to cell (${finalCell.col}, ${finalCell.row}) = (${finalPos.x}px, ${finalPos.y}px)`);
+
+    if (movedDuringDrag) {
+      iconEl.dataset.justDragged = '1';
+      setTimeout(() => {
+        delete iconEl.dataset.justDragged;
+      }, 250);
+    }
 
     // Remove document listeners
     document.removeEventListener('mousemove', handleMouseMove);
