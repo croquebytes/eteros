@@ -39,6 +39,27 @@ export const gameState = {
     eventTokens: 0
   },
 
+  // Resources (for research, defrag, etc.)
+  resources: {
+    gold: 0,           // Mirrors main gold, kept for compatibility
+    codeFragments: 0,  // From recycling items
+    memoryBlocks: 0,   // From defrag tasks
+    cpuCycles: 100,    // Passive generation, used for research
+    entropyDust: 0     // From bosses and prestige
+  },
+
+  // Research System
+  research: {
+    completed: [],
+    active: null,
+    cpuBoost: 0,
+    heroDamageBoost: 1,
+    heroAttackSpeedBoost: 1,
+    heroCritBonus: 0,
+    maxConcurrentTasks: 1,
+    unlocked: []
+  },
+
   // Heroes
   heroes: [
     // Start with 3 basic heroes

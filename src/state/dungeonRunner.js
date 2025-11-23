@@ -350,6 +350,18 @@ function completeWave() {
   // Update highest wave stat
   gameState.stats.highestWave = Math.max(gameState.stats.highestWave, gameState.wave);
 
+  // Boss rewards: Entropy Dust
+  if (isBossWave) {
+    const entropyReward = Math.floor(1 + gameState.wave / 20); // 1 dust per 20 waves
+    if (gameState.resources && gameState.resources.entropyDust !== undefined) {
+      gameState.resources.entropyDust += entropyReward;
+      if (battleNotify) {
+        battleNotify(`Boss defeated! +${entropyReward} Entropy Dust`, 'gold');
+      }
+    }
+    gameState.stats.totalBossesKilled = (gameState.stats.totalBossesKilled || 0) + 1;
+  }
+
   // Item drops
   handleItemDrop(isBossWave);
 
