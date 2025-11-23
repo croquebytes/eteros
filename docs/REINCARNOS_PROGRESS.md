@@ -17,6 +17,11 @@ ReincarnOS is a browser-based OS-style idle RPG built with Vite + Vanilla JS. Th
 - ✅ localStorage persistence
 - ✅ Mobile-responsive
 
+### Recent Update – Offline Dungeon Resume (2025-11-19)
+- Added timestamped `activeDungeonRun` snapshots and `pendingDungeonResult` summaries to localStorage saves so dungeon runs can be simulated while the tab is closed.
+- On load, elapsed time is converted into estimated waves cleared, rewards earned, and hero HP deltas (with boss modifiers) instead of resuming the live loop.
+- Quest Explorer now surfaces a “Dungeon simulated while you were away” panel showing mobs encountered, gold/XP gained, and HP changes; players must acknowledge before starting a new run.
+
 ---
 
 ## Phase 1 – OS Shell Foundation ✅ COMPLETE
