@@ -94,8 +94,8 @@ export const firewallDefense = {
             The system is under attack! Malicious packets are attempting to breach the firewall.
             Click incoming threats to neutralize them before they penetrate system defenses.
           </p>
-          <button id="btn-start-fw" class="btn-primary">
-            Start Defense (${this.entropyDustCost} Entropy Dust)
+          <button id="btn-start-fw" class="btn btn-primary btn-lg btn-block">
+            🛡️ Start Defense <span class="small-text">(${this.entropyDustCost} Entropy Dust)</span>
           </button>
           <div id="fw-start-message" class="start-message"></div>
         </div>
@@ -125,8 +125,8 @@ export const firewallDefense = {
               <div id="result-fw-rewards"></div>
             </div>
           </div>
-          <button id="btn-play-again-fw" class="btn-primary">
-            Play Again (${this.entropyDustCost} Entropy Dust)
+          <button id="btn-play-again-fw" class="btn btn-primary btn-lg btn-block">
+            🛡️ Play Again <span class="small-text">(${this.entropyDustCost} Entropy Dust)</span>
           </button>
         </div>
       </div>

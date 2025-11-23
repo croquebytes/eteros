@@ -37,7 +37,7 @@ function render(rootEl) {
             🗑️ Spam <span class="mail-count">(${mailboxCategories.spam.length})</span>
           </button>
         </div>
-        <button class="btn-compose" id="btn-refresh-mail">🔄 Check Mail</button>
+        <button class="btn btn-secondary btn-block" id="btn-refresh-mail">🔄 Check Mail</button>
       </div>
 
       <div class="mail-main">
@@ -162,7 +162,7 @@ function renderQuestSection(quest) {
           <span class="quest-reward">${amt} ${res}</span>
         `).join(', ')}
       </div>
-      <button class="btn-accept-quest" id="btn-accept-quest">Accept Quest</button>
+      <button class="btn btn-success btn-block" id="btn-accept-quest">⚔️ Accept Quest</button>
     </div>
   `;
 }

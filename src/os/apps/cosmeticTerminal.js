@@ -78,16 +78,16 @@ export const cosmeticTerminal = {
           <h4>🎲 Dispense Cosmetics</h4>
           <div class="roll-buttons">
             <div class="roll-option">
-              <button id="btn-single-roll" class="btn-roll">
+              <button id="btn-single-roll" class="btn btn-primary">
                 <div class="roll-name">Single Roll</div>
-                <div class="roll-cost">${this.singleRollCost} Gold</div>
+                <div class="roll-cost small-text">${this.singleRollCost} Gold</div>
               </button>
             </div>
             <div class="roll-option">
-              <button id="btn-ten-roll" class="btn-roll btn-roll-ten">
+              <button id="btn-ten-roll" class="btn btn-success">
                 <div class="roll-name">10× Roll</div>
-                <div class="roll-cost">${this.tenRollCost} Gold</div>
-                <div class="roll-discount">Save 100 Gold!</div>
+                <div class="roll-cost small-text">${this.tenRollCost} Gold</div>
+                <div class="roll-discount small-text">Save 100 Gold!</div>
               </button>
             </div>
           </div>
@@ -100,7 +100,7 @@ export const cosmeticTerminal = {
           <div id="results-list" class="results-list">
             <!-- Results will be rendered here -->
           </div>
-          <button id="btn-close-results" class="btn-secondary">Close</button>
+          <button id="btn-close-results" class="btn btn-secondary btn-block">Close</button>
         </div>
 
         <!-- Collection -->
