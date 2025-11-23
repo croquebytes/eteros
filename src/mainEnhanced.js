@@ -34,6 +34,9 @@ import { defragger } from './os/apps/defragger.js';
 import { firewallDefense } from './os/apps/firewallDefense.js';
 import { cosmeticTerminal } from './os/apps/cosmeticTerminal.js';
 
+// NEW APPS (Systems & Features)
+import { eBuyApp } from './os/apps/eBuy.js';
+
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
 import { TaskScheduler } from './state/taskScheduler.js';
@@ -73,6 +76,7 @@ skillTreeApp.setResourceManager(resourceManager);
 defragger.setResourceManager(resourceManager);
 firewallDefense.setResourceManager(resourceManager);
 cosmeticTerminal.setResourceManager(resourceManager);
+eBuyApp.setResourceManager(resourceManager);
 
 // Initialize adaptive music (Phase 2)
 audioManager.initEventListeners(eventBus);
@@ -105,6 +109,9 @@ windowManager.registerApp(defragger);
 // NEW APPS (Phase 2)
 windowManager.registerApp(firewallDefense);
 windowManager.registerApp(cosmeticTerminal);
+
+// NEW APPS (Systems & Features)
+windowManager.registerApp(eBuyApp);
 
 // Start game systems
 startCombatLoop();
