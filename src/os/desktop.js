@@ -27,6 +27,7 @@ const APPS = [
   { id: 'speculationTerminal', label: 'Speculation Terminal' },
   { id: 'musicPlayer', label: 'Music Player' },
   { id: 'skillTreeApp', label: 'Skill Trees' },
+  { id: 'soulSummoner', label: 'Summon Heroes' },
   { id: 'defragger', label: 'Defragger' },
   { id: 'firewallDefense', label: 'Firewall Defense' },
   { id: 'cosmeticTerminal', label: 'Aesthetic Terminal' },

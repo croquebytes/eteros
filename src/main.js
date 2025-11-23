@@ -21,6 +21,7 @@ import { settingsApp, initSettings } from './os/apps/settingsApp.js';
 import { musicPlayer } from './os/apps/musicPlayer.js';
 import { skillTreeApp } from './os/apps/skillTreeApp.js';
 import { defragger } from './os/apps/defragger.js';
+import { soulSummonerApp } from './os/apps/soulSummoner.js';
 // NEW APPS (Phase 2)
 import { firewallDefense } from './os/apps/firewallDefense.js';
 import { cosmeticTerminal } from './os/apps/cosmeticTerminal.js';
@@ -40,6 +41,9 @@ import { initSystemSkills, hookSkillXpGains } from './state/systemSkills.js';
 import { gameState } from './state/gameState.js';
 
 const root = document.getElementById('app');
+
+// Expose game state for apps that expect a global reference
+window.gameState = gameState;
 
 // Initialize toast notification system
 initToastManager();
@@ -95,6 +99,7 @@ windowManager.registerApp(settingsApp);
 windowManager.registerApp(musicPlayer);
 windowManager.registerApp(skillTreeApp);
 windowManager.registerApp(defragger);
+windowManager.registerApp(soulSummonerApp);
 // NEW APPS (Phase 2)
 windowManager.registerApp(firewallDefense);
 windowManager.registerApp(cosmeticTerminal);

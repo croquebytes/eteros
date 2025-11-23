@@ -7,11 +7,15 @@ export const CONFIG = {
   combatTickMs: 1000,             // Combat update frequency (1 second)
   autoAttackSpeed: 2000,          // Base attack interval (2 seconds)
 
+  // === Progression ===
+  startingSkillPoints: 3,
+
   // === Currency & Economy ===
   baseGoldPerWave: 5,             // Gold earned per wave completion
   baseXpPerWave: 10,              // XP earned per wave
   goldPerEnemyKill: 2,            // Gold per enemy defeated
   xpPerEnemyKill: 5,              // XP per enemy defeated
+  summonCostGold: 50,             // Cost to summon a new hero
 
   // === Hero Stats (Base) ===
   heroBaseStats: {

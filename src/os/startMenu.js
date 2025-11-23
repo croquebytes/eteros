@@ -58,7 +58,8 @@ export function createStartMenu() {
     { label: 'Quest Explorer', appId: 'questExplorer', icon: '⚔' },
     { label: 'Resource Tracker', appId: 'resourceTracker', icon: '📊' },
     { label: 'Loot Downloads', appId: 'lootDownloads', icon: '📦' },
-    { label: 'Soulware Store', appId: 'soulwareStore', icon: '🛒' }
+    { label: 'Soulware Store', appId: 'soulwareStore', icon: '🛒' },
+    { label: 'Summon Heroes', appId: 'soulSummoner', icon: '✨' }
   ];
 
   quickActions.forEach(action => {

@@ -2,6 +2,7 @@
 // Central state object with save/load capabilities
 
 import { CONFIG } from './config.js';
+import { canUnlockNode } from '../data/skillTrees.js';
 import { showOfflineProgressModal } from '../os/modalManager.js';
 
 // ===== Main Game State =====
@@ -13,14 +14,14 @@ export const gameState = {
 
   // Progress
   wave: 1,
-  gold: 0,
+  gold: 200,
   xp: 0,
   fragments: 0,                   // Secondary currency for prestige
   lifetimeGold: 0,                // Total gold earned (for prestige calculation)
 
   // Resources (Expansion 1.1)
   resources: {
-    gold: 0,
+    gold: 200,
     codeFragments: 0,
     memoryBlocks: 0,
     cpuCycles: 100,                // Start with some CPU
@@ -131,6 +132,10 @@ function createHero(classType, name, level) {
       accessory: null
     },
 
+    // Skill tree progression
+    skillPoints: Math.max(0, level - 1) + (CONFIG.startingSkillPoints || 0),
+    unlockedSkillNodes: [],
+
     // Skills
     skills: classConfig.skills.map(skillId => ({
       id: skillId,
@@ -148,11 +153,76 @@ function createHero(classType, name, level) {
   return hero;
 }
 
+export function recruitHero(classType, name, level = 1) {
+  const hero = createHero(classType, name, level);
+  gameState.heroes.push(hero);
+  return hero;
+}
+
 /**
  * Calculate XP required for a given level
  */
 function calculateXpForLevel(level) {
   return Math.floor(100 * Math.pow(1.5, level - 1));
+}
+
+/**
+ * Get hero by ID
+ */
+export function getHeroById(heroId) {
+  return gameState.heroes.find(h => h.id === heroId);
+}
+
+/**
+ * Grant skill points to a hero (for leveling hooks)
+ */
+export function grantSkillPoints(heroId, amount = 1) {
+  const hero = getHeroById(heroId);
+  if (!hero) return;
+
+  hero.skillPoints = (hero.skillPoints || 0) + amount;
+}
+
+/**
+ * Unlock a skill for a hero if requirements are met
+ */
+export function unlockHeroSkill(heroId, node) {
+  const hero = getHeroById(heroId);
+  if (!hero) return { success: false, message: 'Hero not found' };
+
+  if (!hero.unlockedSkillNodes) {
+    hero.unlockedSkillNodes = [];
+  }
+
+  const requirementCheck = canUnlockNode(hero, node);
+  if (!requirementCheck.canUnlock) {
+    return { success: false, message: requirementCheck.reason };
+  }
+
+  const requiredPoints = node.cost.skillPoints || 0;
+  if (hero.skillPoints < requiredPoints) {
+    return { success: false, message: `Need ${requiredPoints} skill points` };
+  }
+
+  if (node.cost.gold && gameState.gold < node.cost.gold) {
+    return { success: false, message: `Need ${node.cost.gold} gold` };
+  }
+  if (node.cost.codeFragments && gameState.resources.codeFragments < node.cost.codeFragments) {
+    return { success: false, message: `Need ${node.cost.codeFragments} code fragments` };
+  }
+
+  // Spend costs
+  hero.skillPoints -= requiredPoints;
+  if (node.cost.gold) {
+    gameState.gold -= node.cost.gold;
+    gameState.resources.gold = Math.max(0, gameState.resources.gold - node.cost.gold);
+  }
+  if (node.cost.codeFragments) {
+    gameState.resources.codeFragments = Math.max(0, gameState.resources.codeFragments - node.cost.codeFragments);
+  }
+
+  hero.unlockedSkillNodes.push(node.id);
+  return { success: true, message: `Unlocked ${node.name}` };
 }
 
 /**
