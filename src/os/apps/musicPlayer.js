@@ -42,14 +42,14 @@ export const musicPlayer = {
         <!-- Playback Controls -->
         <div class="music-player-section">
           <h4>Playback Controls</h4>
-          <div class="music-player-controls">
-            <button id="mp-play" class="mp-btn mp-btn-play" ${state.isPlaying ? 'disabled' : ''}>
+          <div class="music-player-controls flex gap-sm">
+            <button id="mp-play" class="btn btn-primary" ${state.isPlaying ? 'disabled' : ''}>
               ▶ Play
             </button>
-            <button id="mp-pause" class="mp-btn mp-btn-pause" ${!state.isPlaying ? 'disabled' : ''}>
+            <button id="mp-pause" class="btn btn-secondary" ${!state.isPlaying ? 'disabled' : ''}>
               ⏸ Pause
             </button>
-            <button id="mp-stop" class="mp-btn mp-btn-stop">
+            <button id="mp-stop" class="btn btn-danger">
               ⏹ Stop
             </button>
           </div>

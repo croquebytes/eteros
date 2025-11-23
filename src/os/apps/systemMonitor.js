@@ -46,8 +46,8 @@ function render(rootEl) {
   rootEl.innerHTML = `
     <div class="window-content system-monitor">
       <div class="system-monitor-header">
-        <h2 class="window-subtitle">OS Performance & Skills</h2>
-        <p class="system-monitor-desc">Track CPU, Networking, and Storage management skill levels</p>
+        <h2 class="window-subtitle">📊 OS Performance & Skills</h2>
+        <p class="system-monitor-desc text-muted">Track CPU, Networking, and Storage management skill levels</p>
       </div>
 
       <div class="system-skills-container">

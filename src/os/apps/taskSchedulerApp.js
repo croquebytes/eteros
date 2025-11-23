@@ -129,7 +129,7 @@ function renderTaskCard(task) {
         <div class="task-card-info">
           <div class="task-card-header">
             <span class="task-name">${task.name}</span>
-            <button class="btn-cancel-task" data-task-id="${task.id}" title="Cancel task">✕</button>
+            <button class="btn btn-ghost btn-sm" data-task-id="${task.id}" title="Cancel task">✕</button>
           </div>
 
           <div class="task-progress-section">
@@ -202,7 +202,7 @@ function renderTemplates(rootEl, category) {
           `).join(' ')}
         </div>
       ` : ''}
-      <button class="btn-start-task" data-template="${tmpl.key}">Start Task</button>
+      <button class="btn btn-primary btn-sm btn-block" data-template="${tmpl.key}">Start Task</button>
     </div>
   `).join('');
 
