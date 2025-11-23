@@ -4,6 +4,7 @@ import { windowManager } from './os/windowManager.js';
 import { startAutoSave } from './state/gameState.js';
 import { startCombatLoop } from './state/combatEngine.js';
 import { initToastManager } from './os/toastManager.js';
+import { autoResumeDungeon } from './state/dungeonRunner.js';
 
 // Import apps
 import { questExplorerApp } from './os/apps/questExplorer.js';
@@ -101,6 +102,9 @@ startAutoSave();
 
 // Initialize synergy system
 initSynergySystem();
+
+// Auto-resume dungeon if it was running before refresh
+autoResumeDungeon();
 
 // Start task scheduler tick loop (updates every 100ms)
 setInterval(() => {

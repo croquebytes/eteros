@@ -1,7 +1,6 @@
 // ===== Desktop with Icon Drag/Drop and State Persistence =====
 
 import { windowManager } from './windowManager.js';
-import { createBattleTracker } from './battleTrackerWidget.js';
 import { createStartButton, createStartMenu } from './startMenu.js';
 import {
   getDesktopState,
@@ -148,10 +147,6 @@ export function createDesktop() {
   // Add start menu
   const startMenu = createStartMenu();
   desktopEl.appendChild(startMenu);
-
-  // Add battle tracker widget
-  const battleTracker = createBattleTracker();
-  desktopEl.appendChild(battleTracker);
 
   // Add desktop context menu handlers
   setupDesktopContextMenu(wallpaper, iconsContainer);

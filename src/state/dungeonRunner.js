@@ -490,3 +490,15 @@ function notify() {
     }
   });
 }
+
+/**
+ * Auto-resume dungeon if it was running when page was last closed
+ * Call this after game state is loaded
+ */
+export function autoResumeDungeon() {
+  // Check if dungeon was running when the game was saved
+  if (gameState.dungeonState.running && !dungeonInterval) {
+    console.log('Auto-resuming dungeon from previous session...');
+    startDungeon();
+  }
+}
