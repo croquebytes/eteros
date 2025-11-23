@@ -4,6 +4,70 @@
 
 let previewEl = null;
 
+function computeSnapSlots() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const taskbarHeight = 40; // Height of taskbar at bottom
+  const workHeight = viewportHeight - taskbarHeight;
+
+  const halfWidth = Math.floor(viewportWidth / 2);
+  const rightWidth = viewportWidth - halfWidth;
+  const halfHeight = Math.floor(workHeight / 2);
+  const bottomHeight = workHeight - halfHeight;
+
+  return {
+    maximize: {
+      id: 'maximize',
+      x: 0,
+      y: 0,
+      width: viewportWidth,
+      height: workHeight
+    },
+    left: {
+      id: 'left',
+      x: 0,
+      y: 0,
+      width: halfWidth,
+      height: workHeight
+    },
+    right: {
+      id: 'right',
+      x: halfWidth,
+      y: 0,
+      width: rightWidth,
+      height: workHeight
+    },
+    'top-left': {
+      id: 'top-left',
+      x: 0,
+      y: 0,
+      width: halfWidth,
+      height: halfHeight
+    },
+    'top-right': {
+      id: 'top-right',
+      x: halfWidth,
+      y: 0,
+      width: rightWidth,
+      height: halfHeight
+    },
+    'bottom-left': {
+      id: 'bottom-left',
+      x: 0,
+      y: halfHeight,
+      width: halfWidth,
+      height: bottomHeight
+    },
+    'bottom-right': {
+      id: 'bottom-right',
+      x: halfWidth,
+      y: halfHeight,
+      width: rightWidth,
+      height: bottomHeight
+    }
+  };
+}
+
 /**
  * Initialize snap preview element
  */
@@ -25,46 +89,26 @@ function ensurePreviewElement() {
  * @returns {Object|null} Snap zone definition or null
  */
 export function getSnapZone(x, y, snapMode = 'quarters') {
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const taskbarHeight = 40; // Height of taskbar at bottom
+  const slots = computeSnapSlots();
   const snapMargin = 75; // Distance from edge to trigger snap (increased for easier triggering)
 
   // Calculate zones
   const leftZone = x < snapMargin;
-  const rightZone = x > viewportWidth - snapMargin;
+  const rightZone = x > window.innerWidth - snapMargin;
   const topZone = y < snapMargin;
-  const bottomZone = y > viewportHeight - taskbarHeight - snapMargin;
+  const bottomZone = y > slots.maximize.height - snapMargin;
 
   // Halves mode: left/right/maximize only
   if (snapMode === 'halves') {
     if (topZone && !leftZone && !rightZone) {
       // Top = maximize
-      return {
-        id: 'maximize',
-        x: 0,
-        y: 0,
-        width: viewportWidth,
-        height: viewportHeight - taskbarHeight
-      };
+      return slots.maximize;
     } else if (leftZone && !topZone) {
       // Left half
-      return {
-        id: 'left',
-        x: 0,
-        y: 0,
-        width: viewportWidth / 2,
-        height: viewportHeight - taskbarHeight
-      };
+      return slots.left;
     } else if (rightZone && !topZone) {
       // Right half
-      return {
-        id: 'right',
-        x: viewportWidth / 2,
-        y: 0,
-        width: viewportWidth / 2,
-        height: viewportHeight - taskbarHeight
-      };
+      return slots.right;
     }
   }
 
@@ -73,69 +117,27 @@ export function getSnapZone(x, y, snapMode = 'quarters') {
     // Corners (highest priority)
     if (leftZone && topZone) {
       // Top-left quarter
-      return {
-        id: 'top-left',
-        x: 0,
-        y: 0,
-        width: viewportWidth / 2,
-        height: (viewportHeight - taskbarHeight) / 2
-      };
+      return slots['top-left'];
     } else if (rightZone && topZone) {
       // Top-right quarter
-      return {
-        id: 'top-right',
-        x: viewportWidth / 2,
-        y: 0,
-        width: viewportWidth / 2,
-        height: (viewportHeight - taskbarHeight) / 2
-      };
+      return slots['top-right'];
     } else if (leftZone && bottomZone) {
       // Bottom-left quarter
-      return {
-        id: 'bottom-left',
-        x: 0,
-        y: (viewportHeight - taskbarHeight) / 2,
-        width: viewportWidth / 2,
-        height: (viewportHeight - taskbarHeight) / 2
-      };
+      return slots['bottom-left'];
     } else if (rightZone && bottomZone) {
       // Bottom-right quarter
-      return {
-        id: 'bottom-right',
-        x: viewportWidth / 2,
-        y: (viewportHeight - taskbarHeight) / 2,
-        width: viewportWidth / 2,
-        height: (viewportHeight - taskbarHeight) / 2
-      };
+      return slots['bottom-right'];
     }
     // Edges (lower priority)
     else if (topZone) {
       // Top = maximize
-      return {
-        id: 'maximize',
-        x: 0,
-        y: 0,
-        width: viewportWidth,
-        height: viewportHeight - taskbarHeight
-      };
+      return slots.maximize;
     } else if (leftZone) {
       // Left half
-      return {
-        id: 'left',
-        x: 0,
-        y: 0,
-        width: viewportWidth / 2,
-        height: viewportHeight - taskbarHeight
-      };
+      return slots.left;
     } else if (rightZone) {
       // Right half
-      return {
-        id: 'right',
-        x: viewportWidth / 2,
-        y: 0,
-        width: viewportWidth / 2,
-        height: viewportHeight - taskbarHeight
-      };
+      return slots.right;
     }
   }
 
