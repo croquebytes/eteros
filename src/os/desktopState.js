@@ -84,8 +84,8 @@ function autoArrangeIconsInGrid(gridSize) {
   ];
 
   const icons = {};
-  const padding = 12; // Padding from edges
-  const iconsPerColumn = 8; // Max icons per column before wrapping
+  const padding = 16; // Padding from edges
+  const iconsPerColumn = 7; // Max icons per column before wrapping
 
   apps.forEach((app, index) => {
     const column = Math.floor(index / iconsPerColumn);
@@ -110,17 +110,17 @@ function autoArrangeIconsInGrid(gridSize) {
 export function getGridSize() {
   const width = window.innerWidth;
 
-  // Mobile: 110px for larger touch targets and better spacing
+  // Mobile: 120px for larger touch targets and better spacing
   if (width < 768) {
-    return 110;
+    return 120;
   }
-  // Tablet: 90px
+  // Tablet: 100px
   else if (width < 1024) {
-    return 90;
+    return 100;
   }
-  // Desktop: 72px (increased from 64px for better breathing room)
+  // Desktop: 84px (increased for cleaner grid with 7 icons per column)
   else {
-    return 72;
+    return 84;
   }
 }
 
@@ -128,9 +128,10 @@ export function getGridSize() {
  * Get grid cell coordinates for a pixel position
  */
 export function getGridCell(x, y, gridSize) {
+  const padding = 16; // Match the padding from autoArrangeIconsInGrid
   return {
-    col: Math.round(x / gridSize),
-    row: Math.round(y / gridSize)
+    col: Math.round((x - padding) / gridSize),
+    row: Math.round((y - padding) / gridSize)
   };
 }
 
@@ -138,9 +139,10 @@ export function getGridCell(x, y, gridSize) {
  * Get pixel position for a grid cell
  */
 export function getCellPosition(col, row, gridSize) {
+  const padding = 16; // Match the padding from autoArrangeIconsInGrid
   return {
-    x: col * gridSize,
-    y: row * gridSize
+    x: padding + (col * gridSize),
+    y: padding + (row * gridSize)
   };
 }
 
