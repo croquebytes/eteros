@@ -915,7 +915,7 @@ body {
 .desktop-icon-glyph {
   width: 56px;
   height: 56px;
-  margin: 0 auto 8px;
+  margin: 0 auto 4px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
