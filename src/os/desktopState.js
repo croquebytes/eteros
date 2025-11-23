@@ -41,6 +41,8 @@ export function getDefaultDesktopState() {
         'defragger',
         'firewallDefense',
         'cosmeticTerminal',
+        'systemMonitor',
+        'resourceTracker',
         'settings'
       ],
       runningWindowIds: [] // Ordered list (z-order friendly)
@@ -76,6 +78,8 @@ function autoArrangeIconsInGrid(gridSize) {
     { id: 'defragger', label: 'Defragger' },
     { id: 'firewallDefense', label: 'Firewall Defense' },
     { id: 'cosmeticTerminal', label: 'Aesthetic Terminal' },
+    { id: 'systemMonitor', label: 'System Monitor' },
+    { id: 'resourceTracker', label: 'Resource Tracker' },
     { id: 'settings', label: 'Settings' }
   ];
 
@@ -106,17 +110,17 @@ function autoArrangeIconsInGrid(gridSize) {
 export function getGridSize() {
   const width = window.innerWidth;
 
-  // Mobile: 80-100px for larger touch targets
+  // Mobile: 110px for larger touch targets and better spacing
   if (width < 768) {
-    return 100;
+    return 110;
   }
-  // Tablet: 80px
+  // Tablet: 90px
   else if (width < 1024) {
-    return 80;
+    return 90;
   }
-  // Desktop: 64px
+  // Desktop: 72px (increased from 64px for better breathing room)
   else {
-    return 64;
+    return 72;
   }
 }
 
