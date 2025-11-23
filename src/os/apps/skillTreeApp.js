@@ -4,7 +4,7 @@
  */
 
 import { SKILL_TREES, getNodeById, canUnlockNode } from '../../data/skillTrees.js';
-import { unlockSkillNode, resetSkillTree } from '../../state/heroSystem.js';
+import { gameState, getHeroById as getHeroByIdFromState, unlockHeroSkill } from '../../state/gameState.js';
 
 export const skillTreeApp = {
   id: 'skillTreeApp',
@@ -351,7 +351,7 @@ export const skillTreeApp = {
    * Unlock a skill node
    */
   unlockNode(node, hero, rootEl) {
-    const result = unlockSkillNode(hero, node, this.resourceManager);
+    const result = unlockHeroSkill(hero.id, node);
 
     const unlockMsg = rootEl.querySelector('#st-unlock-message');
 
@@ -378,19 +378,24 @@ export const skillTreeApp = {
     rootEl.querySelector('#st-btn-respec')?.addEventListener('click', () => {
       if (!this.selectedHeroId) return;
 
-      const hero = this.getHeroById(this.selectedHeroId);
+      const hero = getHeroById(this.selectedHeroId);
       if (!hero) return;
 
       if (confirm(`Reset all skills for ${hero.name}? This costs 500 gold and refunds all skill points.`)) {
-        const result = resetSkillTree(hero, this.resourceManager, 500);
-
-        if (result.success) {
-          alert(result.message);
-          this.selectHero(hero.id, rootEl);
-          this.renderHeroSelector(rootEl);
-        } else {
-          alert(result.message);
+        const canAfford = gameState.gold >= 500;
+        if (!canAfford) {
+          alert('Not enough gold to respec.');
+          return;
         }
+
+        gameState.gold -= 500;
+        if (!hero.unlockedSkillNodes) hero.unlockedSkillNodes = [];
+        hero.skillPoints = (hero.skillPoints || 0) + hero.unlockedSkillNodes.length;
+        hero.unlockedSkillNodes = [];
+
+        alert(`Skills reset! Refunded skill points to ${hero.skillPoints}.`);
+        this.selectHero(hero.id, rootEl);
+        this.renderHeroSelector(rootEl);
       }
     });
   },
@@ -400,26 +405,21 @@ export const skillTreeApp = {
    * TODO: Connect to actual gameState in integration phase
    */
   getHeroes() {
-    // Placeholder - will be replaced with actual gameState.heroes
-    if (window.gameState && window.gameState.heroes) {
-      return window.gameState.heroes;
-    }
-    // Return empty for now
-    return [];
+    return gameState.heroes || [];
   },
 
   /**
    * Helper: Get hero by ID
    */
   getHeroById(heroId) {
-    const heroes = this.getHeroes();
-    return heroes.find(h => h.id === heroId);
+    return getHeroByIdFromState(heroId);
   },
 
   /**
    * Helper: Get hero class name
    */
   getHeroClassName(hero) {
+    if (hero.class) return hero.class;
     // Map template to class name
     // This is a simplification - in reality, we'd look up the template
     if (hero.templateId) {

@@ -4435,6 +4435,109 @@ body.compact-mode .enemy-card {
   color: #ff4444;
 }
 
+/* Soul Summoner */
+.summon-app {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+}
+
+.summon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.summon-currencies {
+  text-align: right;
+  font-size: 14px;
+}
+
+.summon-currencies .currency {
+  font-weight: 700;
+}
+
+.summon-currencies .muted {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.summon-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.summon-btn {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.summon-btn:hover {
+  filter: brightness(1.05);
+}
+
+.summon-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summon-result-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+.summon-result-card .result-title {
+  font-weight: 700;
+  color: var(--accent-blue);
+  margin-bottom: 4px;
+}
+
+.summon-result-card .result-name {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.summon-result-card .result-details,
+.summon-result-card .result-points {
+  color: var(--text-muted);
+}
+
+.summon-roster ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roster-entry {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.roster-name {
+  font-weight: 700;
+}
+
+.roster-meta {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .skill-tree-help {
   background: rgba(41, 140, 255, 0.1);
   border: 1px solid var(--accent-blue);

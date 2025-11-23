@@ -198,6 +198,11 @@ ReincarnOS is a browser-based OS-style idle RPG built with Vite + Vanilla JS. Th
 
 ## Phase 5 – Content & Polish (ONGOING)
 
+### Latest Additions (Skill Trees & Summoning)
+
+- Skill Tree app now pulls heroes directly from core `gameState` and shows nodes from `src/data/skillTrees.js`. Heroes start with a few skill points and can unlock nodes (spending gold or fragments when costs require it) with proper validation and respec refunding points for 500 gold.
+- Summon Heroes app added to the desktop/start menu. Uses gold (default 50) to recruit a random class hero via `gameState.recruitHero`, immediately updating the roster and reflecting starting skill points.
+
 **Status:** Not Started
 **Goal:** Add content variety and final polish
 
