@@ -243,15 +243,23 @@ function recycleItemPrompt(itemId, rootEl) {
   const fragmentValue = Math.max(1, Math.floor(rarityMultiplier));
 
   showConfirmToast(
-    `Recycle ${item.name}? You will receive: +${goldValue} Gold`,
+    `Recycle ${item.name}? You will receive: +${goldValue} Gold, +${fragmentValue} Code Fragments`,
     () => {
       gameState.gold += goldValue;
-      if (gameState.currencies && gameState.currencies.memoryFragments !== undefined) {
-        gameState.currencies.memoryFragments += fragmentValue;
+
+      // Give code fragments (used for research)
+      if (gameState.resources && gameState.resources.codeFragments !== undefined) {
+        gameState.resources.codeFragments += fragmentValue;
       }
+
+      // Also update currencies for compatibility
+      if (gameState.currencies && gameState.currencies.codeFragments !== undefined) {
+        gameState.currencies.codeFragments += fragmentValue;
+      }
+
       gameState.inventory = gameState.inventory.filter(i => i.id !== itemId);
-      showToast(`Recycled ${item.name} for ${goldValue} gold`, 'success');
-      console.log(`Recycled ${item.name} for ${goldValue} gold and ${fragmentValue} fragments`);
+      showToast(`Recycled ${item.name} for ${goldValue} gold and ${fragmentValue} code fragments`, 'success');
+      console.log(`Recycled ${item.name} for ${goldValue} gold and ${fragmentValue} code fragments`);
       render(rootEl);
     }
   );

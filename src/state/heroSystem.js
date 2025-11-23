@@ -95,13 +95,18 @@ export function createHero(templateId, level = 1) {
     fatigued: false,
     fatigueEndTime: null,
 
-    // Skill Tree (NEW)
+    // Skill Tree
     skillPoints: Math.max(0, level - 1), // 1 point per level beyond 1
     unlockedSkillNodes: [] // Array of skill node IDs
   };
 
   // Calculate current stats
   updateHeroStats(hero);
+
+  // Log initial skill points
+  if (hero.skillPoints > 0) {
+    console.log(`${hero.name} created at level ${level} with ${hero.skillPoints} skill points`);
+  }
 
   return hero;
 }
@@ -360,11 +365,14 @@ export function addXpToHero(hero, xpAmount) {
     hero.level++;
     hero.xpToNextLevel = calculateXpForLevel(hero.level + 1);
 
+    // Grant skill point on level up
+    grantSkillPoints(hero, 1);
+
     // Update stats on level up
     updateHeroStats(hero);
 
     // Log level up
-    console.log(`${hero.name} leveled up to ${hero.level}!`);
+    console.log(`${hero.name} leveled up to ${hero.level}! (+1 skill point, total: ${hero.skillPoints})`);
 
     // Check for unlocks
     const unlock = LEVEL_UNLOCKS[hero.level];

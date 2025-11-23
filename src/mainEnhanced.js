@@ -65,7 +65,7 @@ root.appendChild(desktopEl);
 windowManager.init(windowLayerEl);
 
 // Initialize new game systems
-const resourceManager = new ResourceManager();
+const resourceManager = new ResourceManager(gameState);
 const taskScheduler = new TaskScheduler(resourceManager);
 
 // Set resource manager for apps that need it
