@@ -42,6 +42,7 @@ import { audioManager } from './state/audioManager.js';
 import { eventBus } from './state/eventBus.js';
 import { themeManager } from './state/themeManager.js';
 import { tasksSystem } from './state/tasksSystem.js';
+import { setResearchBonusesGetter } from './state/heroSystem.js';
 
 // Make gameState available globally for debugging
 window.gameState = gameState;
@@ -111,6 +112,9 @@ startAutoSave();
 
 // Initialize synergy system
 initSynergySystem();
+
+// Set up research bonuses getter for hero system
+setResearchBonusesGetter(() => gameState.research);
 
 // Start task scheduler tick loop (updates every 100ms)
 setInterval(() => {
