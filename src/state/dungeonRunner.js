@@ -11,6 +11,8 @@ let battleNotify = null;
 let currentEnemies = [];
 let combatLog = [];
 let currentEvent = null;
+let activeModifiers = []; // Track active dungeon modifiers
+let dungeonStartTime = null; // For time-limited dungeons
 
 // Special dungeon events
 const DUNGEON_EVENTS = [
@@ -94,6 +96,18 @@ export function startDungeon() {
   gameState.dungeonState.running = true;
   gameState.dungeonState.timeInWave = 0;
 
+  // Get current dungeon and apply modifiers
+  const dungeon = getCurrentDungeon();
+  activeModifiers = dungeon?.modifiers || [];
+  dungeonStartTime = Date.now();
+
+  // Notify about active modifiers
+  if (activeModifiers.length > 0 && battleNotify) {
+    activeModifiers.forEach(mod => {
+      battleNotify(`⚠️ ${mod.name}: ${mod.description}`, 'warning');
+    });
+  }
+
   // Top off heroes before a new push
   gameState.heroes.forEach(hero => {
     updateHeroStats(hero);
@@ -125,9 +139,15 @@ export function toggleDungeon() {
 }
 
 function spawnEnemies() {
-  const isBossWave = gameState.wave % 10 === 0;
+  let isBossWave = gameState.wave % 10 === 0;
 
-  // Roll for special event (not on boss waves)
+  // Check for "all_bosses" modifier
+  const allBossesModifier = activeModifiers.find(m => m.effect?.allBosses);
+  if (allBossesModifier) {
+    isBossWave = true; // Every wave is a boss wave!
+  }
+
+  // Roll for special event (not on boss waves unless modifier forces it)
   currentEvent = null;
   if (!isBossWave && Math.random() < 0.3) { // 30% chance for any event
     const totalChance = DUNGEON_EVENTS.reduce((sum, e) => sum + e.chance, 0);
@@ -214,6 +234,20 @@ function tickCombat() {
   const activeHeroes = gameState.heroes.filter(h => h.currentHp > 0 && !h.onDispatch);
   const aliveEnemies = currentEnemies.filter(e => e.currentHp > 0);
 
+  // Check time limit modifier
+  const timeLimitModifier = activeModifiers.find(m => m.effect?.timeLimit);
+  if (timeLimitModifier && dungeonStartTime) {
+    const elapsedSeconds = (now - dungeonStartTime) / 1000;
+    const timeLimit = timeLimitModifier.effect.timeLimit;
+    if (elapsedSeconds >= timeLimit) {
+      if (battleNotify) {
+        battleNotify(`⏰ Time limit exceeded! Dungeon failed.`, 'error');
+      }
+      loseWave();
+      return;
+    }
+  }
+
   // Check win condition
   if (aliveEnemies.length === 0) {
     completeWave();
@@ -224,6 +258,19 @@ function tickCombat() {
   if (activeHeroes.length === 0) {
     loseWave();
     return;
+  }
+
+  // Apply skill tree passive effects (combat regen)
+  const noHealingModifier = activeModifiers.find(m => m.effect?.disableHealing);
+  if (!noHealingModifier) {
+    for (const hero of activeHeroes) {
+      if (hero.skillBonuses && hero.skillBonuses.combatRegen > 0) {
+        const regenAmount = Math.floor(hero.currentStats.hp * hero.skillBonuses.combatRegen);
+        if (regenAmount > 0) {
+          hero.currentHp = Math.min(hero.currentStats.hp, hero.currentHp + regenAmount);
+        }
+      }
+    }
   }
 
   // Heroes attack
@@ -253,14 +300,48 @@ function tickCombat() {
 }
 
 function heroAttack(hero, enemy) {
-  const damage = Math.max(1, hero.currentStats.atk - enemy.def);
+  let damage = Math.max(1, hero.currentStats.atk - enemy.def);
+
+  // Apply critical strike from skill tree
+  let isCrit = false;
+  if (hero.skillBonuses && hero.skillBonuses.critChance > 0) {
+    if (Math.random() < hero.skillBonuses.critChance) {
+      isCrit = true;
+      const critMult = hero.skillBonuses.critMultiplier || 2.0;
+      damage = Math.floor(damage * critMult);
+    }
+  }
+
+  // Check for execute (instant kill below threshold)
+  if (hero.skillBonuses && hero.skillBonuses.executeChance > 0 && !enemy.isBoss) {
+    const executeThreshold = hero.skillBonuses.executeThreshold || 0.15;
+    const hpPercent = enemy.currentHp / enemy.maxHp;
+    if (hpPercent <= executeThreshold && Math.random() < hero.skillBonuses.executeChance) {
+      damage = enemy.currentHp; // Instant kill!
+      combatLog.push({
+        type: 'execute',
+        attacker: hero.name,
+        target: enemy.name
+      });
+    }
+  }
+
   enemy.currentHp = Math.max(0, enemy.currentHp - damage);
+
+  // Apply lifesteal (heal based on damage dealt)
+  if (hero.skillBonuses && hero.skillBonuses.lifesteal > 0) {
+    const healAmount = Math.floor(damage * hero.skillBonuses.lifesteal);
+    if (healAmount > 0) {
+      hero.currentHp = Math.min(hero.currentStats.hp, hero.currentHp + healAmount);
+    }
+  }
 
   combatLog.push({
     type: 'hero-attack',
     attacker: hero.name,
     target: enemy.name,
-    damage: damage
+    damage: damage,
+    isCrit: isCrit
   });
 
   if (enemy.currentHp === 0) {
