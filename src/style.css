@@ -7602,3 +7602,69 @@ body.compact-mode .enemy-card {
 
 /* ===== End Resource Tracker App ===== */
 
+/* ===== Offline Dungeon Summary ===== */
+.qe-offline-results {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.95), rgba(17, 24, 39, 0.9));
+  border: 1px solid #1f2937;
+  border-left: 4px solid #3b82f6;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.qe-offline-title {
+  font-weight: 700;
+  color: #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.qe-offline-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.qe-offline-summary {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  padding: 10px;
+  border-radius: 8px;
+  color: #dbeafe;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.qe-offline-heroes,
+.qe-offline-events {
+  background: rgba(17, 24, 39, 0.65);
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 10px;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.qe-offline-subtitle {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #93c5fd;
+}
+
+.qe-offline-hero,
+.qe-offline-event {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.qe-offline-hero:last-child,
+.qe-offline-event:last-child {
+  border-bottom: none;
+}
+
+.qe-offline-empty {
+  color: #9ca3af;
+  font-style: italic;
+}
+

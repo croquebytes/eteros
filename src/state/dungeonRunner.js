@@ -1,7 +1,7 @@
 // ===== Dungeon Runner =====
 // Lightweight dungeon loop using the enhanced game state
 
-import { gameState, addItemToInventory } from './enhancedGameState.js';
+import { gameState, addItemToInventory, saveGame } from './enhancedGameState.js';
 import { updateHeroStats, addXpToHero } from './heroSystem.js';
 import { getDungeonById } from './dungeonTemplates.js';
 
@@ -96,6 +96,9 @@ export function startDungeon() {
   gameState.dungeonState.running = true;
   gameState.dungeonState.timeInWave = 0;
 
+  // Clear any pending offline summary since a new run is starting
+  gameState.pendingDungeonResult = null;
+
   // Get current dungeon and apply modifiers
   const dungeon = getCurrentDungeon();
   activeModifiers = dungeon?.modifiers || [];
@@ -114,6 +117,19 @@ export function startDungeon() {
     hero.currentHp = hero.currentStats.hp;
   });
 
+  gameState.activeDungeonRun = {
+    dungeonId: dungeon?.id || gameState.currentDungeon || gameState.currentDungeonId || 'story_node_1',
+    startedAt: Date.now(),
+    lastTickAt: Date.now(),
+    startWave: gameState.wave,
+    heroSnapshots: gameState.heroes.map(hero => ({
+      id: hero.id,
+      name: hero.name,
+      maxHp: hero.currentStats.hp,
+      startHp: hero.currentHp,
+    })),
+  };
+
   // Create enemies for this wave
   spawnEnemies();
 
@@ -127,6 +143,7 @@ export function stopDungeon() {
     dungeonInterval = null;
   }
   gameState.dungeonState.running = false;
+  gameState.activeDungeonRun = null;
   notify();
 }
 
@@ -231,6 +248,10 @@ function tickCombat() {
   if (!gameState.dungeonState.running) return;
 
   const now = Date.now();
+  if (gameState.activeDungeonRun) {
+    gameState.activeDungeonRun.lastTickAt = now;
+    gameState.activeDungeonRun.currentWave = gameState.wave;
+  }
   const activeHeroes = gameState.heroes.filter(h => h.currentHp > 0 && !h.onDispatch);
   const aliveEnemies = currentEnemies.filter(e => e.currentHp > 0);
 
@@ -448,6 +469,10 @@ function completeWave() {
 
   // Advance wave and spawn new enemies
   gameState.wave += 1;
+  if (gameState.activeDungeonRun) {
+    gameState.activeDungeonRun.currentWave = gameState.wave;
+    gameState.activeDungeonRun.lastTickAt = Date.now();
+  }
   spawnEnemies();
 
   notify();
@@ -568,6 +593,14 @@ export function getDungeonStats() {
     aliveEnemies: aliveEnemies.length,
     currentEvent: currentEvent // Expose current dungeon event
   };
+}
+
+export function acknowledgePendingDungeonResult() {
+  gameState.pendingDungeonResult = null;
+  gameState.activeDungeonRun = null;
+  gameState.dungeonState.running = false;
+  saveGame();
+  notify();
 }
 
 export function getCombatLog(limit = 10) {

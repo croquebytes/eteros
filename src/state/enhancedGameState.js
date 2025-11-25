@@ -4,6 +4,7 @@
 import { createHero, addXpToHero, updateHeroStats, calculateXpForLevel } from './heroSystem.js';
 import { createGachaState } from './gachaSystem.js';
 import { createDispatchState, updateDispatches } from './dispatchSystem.js';
+import { getDungeonById } from './dungeonTemplates.js';
 
 // ===== Main Game State =====
 export const gameState = {
@@ -25,6 +26,10 @@ export const gameState = {
     timeInWave: 0,
     waveDuration: 4000
   },
+
+  // Dungeon persistence
+  activeDungeonRun: null, // Stores currently running dungeon metadata for offline simulation
+  pendingDungeonResult: null, // Stores simulated results to present on login
 
   // Currencies
   gold: 0,
@@ -400,10 +405,7 @@ const SAVE_KEY = 'reincarnos_enhanced_save';
 export function saveGame() {
   try {
     gameState.lastSaveTime = Date.now();
-    const saveData = JSON.stringify(gameState);
-    localStorage.setItem(SAVE_KEY, saveData);
-    console.log('Game saved successfully');
-    return { success: true };
+    return serializeGameState();
   } catch (error) {
     console.error('Failed to save game:', error);
     return { success: false, error: error.message };
@@ -412,30 +414,7 @@ export function saveGame() {
 
 export function loadGame() {
   try {
-    const saveData = localStorage.getItem(SAVE_KEY);
-    if (!saveData) {
-      console.log('No save data found');
-      return { success: false, error: 'No save found' };
-    }
-
-    const loadedState = JSON.parse(saveData);
-
-    // Calculate offline progress
-    const offlineTime = Date.now() - loadedState.lastSaveTime;
-    if (offlineTime > 0) {
-      calculateOfflineProgress(loadedState, offlineTime);
-    }
-
-    // Merge loaded state
-    Object.assign(gameState, loadedState);
-
-    // Update hero stats (in case formulas changed)
-    for (const hero of gameState.heroes) {
-      updateHeroStats(hero, gameState.systemWideSoulware);
-    }
-
-    console.log(`Game loaded. Offline for ${Math.floor(offlineTime / 60000)} minutes`);
-    return { success: true, offlineTime };
+    return hydrateGameState();
   } catch (error) {
     console.error('Failed to load game:', error);
     return { success: false, error: error.message };
@@ -443,7 +422,7 @@ export function loadGame() {
 }
 
 function calculateOfflineProgress(state, offlineTimeMs) {
-  // TODO: Calculate offline dungeon progress, dispatch completions, etc.
+  // TODO: Calculate additional offline systems (dispatch completions, etc.)
   const offlineHours = offlineTimeMs / 3600000;
   const maxOfflineHours = 24;  // Cap at 24 hours
 
@@ -455,6 +434,166 @@ function calculateOfflineProgress(state, offlineTimeMs) {
   state.lifetimeGold += offlineGold;
 
   console.log(`Offline progress: +${offlineGold} gold`);
+}
+
+export function serializeGameState() {
+  try {
+    const saveData = JSON.stringify(gameState);
+    localStorage.setItem(SAVE_KEY, saveData);
+    console.log('Game saved successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to serialize game state:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export function hydrateGameState() {
+  const now = Date.now();
+
+  const saveData = localStorage.getItem(SAVE_KEY);
+  if (!saveData) {
+    console.log('No save data found');
+    return { success: false, error: 'No save found' };
+  }
+
+  const loadedState = JSON.parse(saveData);
+
+  // Calculate offline progress (base)
+  const offlineTime = now - loadedState.lastSaveTime;
+  if (offlineTime > 0) {
+    calculateOfflineProgress(loadedState, offlineTime);
+  }
+
+  // Simulate any active dungeon run
+  let dungeonResult = null;
+  if (loadedState.activeDungeonRun) {
+    dungeonResult = simulateOfflineDungeonRun(loadedState, now);
+  }
+
+  // Merge loaded state
+  Object.assign(gameState, loadedState);
+
+  // Update hero stats (in case formulas changed)
+  for (const hero of gameState.heroes) {
+    updateHeroStats(hero, gameState.systemWideSoulware);
+  }
+
+  console.log(`Game loaded. Offline for ${Math.floor(offlineTime / 60000)} minutes`);
+  return { success: true, offlineTime, dungeonResult };
+}
+
+function simulateOfflineDungeonRun(state, now) {
+  const run = state.activeDungeonRun;
+  if (!run) return null;
+
+  const waveDuration = state.dungeonState?.waveDuration || 4000;
+  const elapsedMs = Math.max(0, now - (run.lastTickAt || state.lastSaveTime || run.startedAt || now));
+  const potentialWaves = Math.max(0, Math.floor(elapsedMs / waveDuration));
+
+  const dungeonId = run.dungeonId || state.currentDungeon || state.currentDungeonId || 'story_node_1';
+  const dungeon = getDungeonById(dungeonId);
+  const baseGold = dungeon?.rewards?.goldPerWave || 5;
+  const baseXp = dungeon?.rewards?.xpPerWave || 20;
+
+  const heroSnapshots = state.heroes.map(hero => {
+    const maxHp = hero.currentStats?.hp || hero.maxHp || 100;
+    const startHp = hero.currentHp ?? maxHp;
+    return {
+      id: hero.id,
+      name: hero.name,
+      maxHp,
+      startHp,
+      endHp: startHp,
+      damageTaken: 0,
+    };
+  });
+
+  let wavesCleared = 0;
+  let goldEarned = 0;
+  let xpEarned = 0;
+  const eventLog = [];
+  let currentWave = state.wave;
+
+  for (let i = 0; i < potentialWaves; i++) {
+    const waveNumber = currentWave + i;
+    const isBossWave = waveNumber % 10 === 0;
+    const difficultyScale = 0.04 + (waveNumber * 0.002);
+
+    let anyAlive = false;
+    const heroStates = heroSnapshots.map(snapshot => {
+      const preHp = snapshot.endHp;
+      const damage = Math.ceil(snapshot.maxHp * difficultyScale * (isBossWave ? 1.5 : 1));
+      snapshot.endHp = Math.max(0, snapshot.endHp - damage);
+      snapshot.damageTaken += Math.max(0, preHp - snapshot.endHp);
+      if (snapshot.endHp > 0) anyAlive = true;
+      return {
+        name: snapshot.name,
+        hpChange: Math.max(0, preHp - snapshot.endHp),
+        remainingHp: snapshot.endHp,
+        maxHp: snapshot.maxHp,
+      };
+    });
+
+    if (!anyAlive) {
+      eventLog.push({
+        wave: waveNumber,
+        description: isBossWave
+          ? 'Party wiped by a boss while you were away.'
+          : 'Party fell during a routine wave while offline.',
+        heroStates,
+      });
+      break;
+    }
+
+    wavesCleared += 1;
+    goldEarned += baseGold * (isBossWave ? 2 : 1);
+    xpEarned += baseXp * (isBossWave ? 2 : 1);
+
+    eventLog.push({
+      wave: waveNumber,
+      description: isBossWave
+        ? 'Boss routed during offline run.'
+        : 'Cleared a wave while you were offline.',
+      heroStates,
+    });
+  }
+
+  // Apply rewards and hero HP updates to loaded state
+  state.wave += wavesCleared;
+  state.gold += goldEarned;
+  state.lifetimeGold += goldEarned;
+  state.xp += xpEarned;
+  state.stats.totalGoldEarned = (state.stats.totalGoldEarned || 0) + goldEarned;
+  state.stats.highestWave = Math.max(state.stats.highestWave, state.wave);
+
+  // Apply hero HP changes
+  for (const hero of state.heroes) {
+    const snapshot = heroSnapshots.find(h => h.id === hero.id);
+    if (snapshot) {
+      hero.currentHp = snapshot.endHp;
+    }
+  }
+
+  // Reset active run flags so the dungeon does not auto-continue
+  state.dungeonState.running = false;
+  state.dungeonState.timeInWave = 0;
+  state.activeDungeonRun = null;
+
+  const result = {
+    dungeonId,
+    startWave: state.wave - wavesCleared,
+    endWave: state.wave,
+    wavesCleared,
+    goldEarned,
+    xpEarned,
+    elapsedMs,
+    heroSnapshots,
+    eventLog,
+  };
+
+  state.pendingDungeonResult = result;
+  return result;
 }
 
 // ===== Auto-save System =====

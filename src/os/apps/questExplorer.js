@@ -2,7 +2,7 @@
 // Dungeon controller and hero status interface
 
 import { gameState } from '../../state/enhancedGameState.js';
-import { onDungeonUpdate, getDungeonStats, toggleDungeon, stopDungeon, getCombatLog } from '../../state/dungeonRunner.js';
+import { onDungeonUpdate, getDungeonStats, toggleDungeon, stopDungeon, getCombatLog, acknowledgePendingDungeonResult } from '../../state/dungeonRunner.js';
 import { updateHeroStats, calculateXpForLevel } from '../../state/heroSystem.js';
 import { calculatePartyDamage, calculatePartyPower, getDungeonDifficulty, getDifficultyDisplay } from '../../state/partyPowerCalculator.js';
 import { DUNGEON_TEMPLATES } from '../../state/dungeonTemplates.js';
@@ -15,6 +15,7 @@ export const questExplorerApp = {
     // Create initial UI
     rootEl.innerHTML = `
       <div class="window-content quest-explorer">
+        <div id="qe-offline-results" class="qe-offline-results" style="display: none;"></div>
         <div class="qe-header">
           <div class="qe-controls">
             <button id="qe-toggle-run" class="btn">Start Dungeon</button>
@@ -213,6 +214,7 @@ export const questExplorerApp = {
 
     // Update UI function
     function updateUI() {
+      renderPendingResults();
       const stats = getDungeonStats();
 
       // Update party power display
@@ -377,6 +379,59 @@ export const questExplorerApp = {
           }, 10);
         }
       }
+    }
+
+    function renderPendingResults() {
+      const container = rootEl.querySelector('#qe-offline-results');
+      if (!container) return;
+
+      const result = gameState.pendingDungeonResult;
+      if (!result) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+
+      const elapsedSeconds = Math.floor((result.elapsedMs || 0) / 1000);
+      const heroLines = result.heroSnapshots
+        .map(hero => {
+          const change = hero.startHp - hero.endHp;
+          return `<div class="qe-offline-hero">${hero.name}: ${hero.startHp} → ${hero.endHp} HP (${change > 0 ? '-' + change : '+0'})</div>`;
+        })
+        .join('');
+
+      const eventLines = result.eventLog
+        .slice(-5)
+        .map(event => `<div class="qe-offline-event">Wave ${event.wave}: ${event.description}</div>`)
+        .join('');
+
+      container.style.display = 'block';
+      container.innerHTML = `
+        <div class="qe-offline-title">Dungeon simulated while you were away</div>
+        <div class="qe-offline-body">
+          <div class="qe-offline-summary">
+            <div><strong>Waves Cleared:</strong> ${result.wavesCleared}</div>
+            <div><strong>Gold Earned:</strong> ${result.goldEarned}</div>
+            <div><strong>XP Earned:</strong> ${result.xpEarned}</div>
+            <div><strong>Elapsed Offline:</strong> ${elapsedSeconds}s</div>
+          </div>
+          <div class="qe-offline-heroes">
+            <div class="qe-offline-subtitle">Hero HP Changes</div>
+            ${heroLines || '<div class="qe-offline-empty">No active heroes recorded.</div>'}
+          </div>
+          <div class="qe-offline-events">
+            <div class="qe-offline-subtitle">Mob Encounters</div>
+            ${eventLines || '<div class="qe-offline-empty">No combat occurred while you were away.</div>'}
+          </div>
+        </div>
+        <button id="qe-offline-ack" class="btn btn-primary">Acknowledge Results</button>
+      `;
+
+      const ackBtn = container.querySelector('#qe-offline-ack');
+      ackBtn?.addEventListener('click', () => {
+        acknowledgePendingDungeonResult();
+        updateUI();
+      });
     }
   }
 };
