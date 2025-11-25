@@ -156,6 +156,14 @@ ReincarnOS is a browser-based OS-style idle RPG built with Vite + Vanilla JS. Th
 
 ---
 
+### Visual Design Direction (2026-01-01)
+
+- Adopted a dark fantasy glassmorphism palette (blue/cyan with amethyst ambient glow) paired with crisp sans typography to keep windows legible while feeling otherworldly.
+- Added reusable design tokens for glass layers, blur radii, neon shadows, and accent hues to centralize theme control for future skinning.
+- Standardized surface styles (`.surface-panel`, `.card`, `.tile`) plus refreshed window chrome, desktop icons, and Start menu microinteractions to align buttons, panels, and menus under a single aesthetic language.
+
+---
+
 ## Phase 2 – UI Polish & Feedback (PLANNED)
 
 **Status:** Not Started
