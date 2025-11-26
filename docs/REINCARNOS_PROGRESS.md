@@ -634,6 +634,12 @@ gameState.eBuyState = {
 4. Implement equipment slot validation if errors occur
 5. Add Start menu resource tracker widget
 
+### Concept & Stub Additions – Pet & NetSim Browser
+
+- Designed **Daemonling Pet** Tamagotchi system (hunger, energy, mood, stability, curiosity) with 60s decay rules, neglect spiral, and buffed recovery actions (feed, play, rest, debug, praise, co-browse). Added cosmetic/reward hooks and low-clutter UI guidance for compact pet window.
+- Designed **NetSim Browser** gag app with fake URL chrome, bookmark sidebar, and scripted pages (news, weather, advisories) plus mini-games (packet pop clicker, hex-word rune builder).
+- Implemented lightweight stubs: `petTerminal` shows stat bars, action buttons, and flavor log; `fakeBrowser` renders sidebar navigation, simulated history, and placeholder content/mini-games. Both are registered as desktop apps and window manager entries.
+
 **Low Priority / Nice-to-Have:**
 - Tamagotchi pet system
 - Fake website browser
