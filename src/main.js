@@ -28,6 +28,8 @@ import { cosmeticTerminal } from './os/apps/cosmeticTerminal.js';
 // NEW APPS (Phase 3)
 import { systemMonitor } from './os/apps/systemMonitor.js';
 import { resourceTrackerApp } from './os/apps/resourceTracker.js';
+import { petTerminalApp } from './os/apps/petTerminal.js';
+import { fakeBrowserApp } from './os/apps/fakeBrowser.js';
 
 // Import new game systems
 import { ResourceManager } from './state/resourceManager.js';
@@ -106,6 +108,8 @@ windowManager.registerApp(cosmeticTerminal);
 // NEW APPS (Phase 3)
 windowManager.registerApp(systemMonitor);
 windowManager.registerApp(resourceTrackerApp);
+windowManager.registerApp(petTerminalApp);
+windowManager.registerApp(fakeBrowserApp);
 
 // Start game systems
 startCombatLoop();

@@ -32,6 +32,8 @@ const APPS = [
   { id: 'cosmeticTerminal', label: 'Aesthetic Terminal' },
   { id: 'systemMonitor', label: 'System Monitor' },
   { id: 'resourceTracker', label: 'Resource Tracker' },
+  { id: 'petTerminal', label: 'Daemonling Pet' },
+  { id: 'fakeBrowser', label: 'NetSim Browser' },
   { id: 'settings', label: 'Settings' },
 ];
 
